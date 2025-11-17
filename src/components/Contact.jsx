@@ -93,7 +93,7 @@ export default function Contact() {
               href="tel:+15551234567" 
               className="text-white hover:text-red-400 transition drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
             >
-              (555) 123-4567
+              (719) 565-7189
             </a>
           </div>
 
@@ -107,7 +107,7 @@ export default function Contact() {
               href="mailto:info@padillasconcrete.com" 
               className="text-white hover:text-red-400 transition drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
             >
-              info@padillasconcrete.com
+              vpadilla604@gmail.com
             </a>
           </div>
 
