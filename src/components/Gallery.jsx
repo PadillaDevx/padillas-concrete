@@ -42,9 +42,17 @@ export default function Gallery() {
       id: 1,
       title: 'Residential Driveway',
       location: 'Luverne, MN',
-      before: null, // TODO: Agregar ruta de foto real
-      after: null,  // TODO: Agregar ruta de foto real
-      allPhotos: [] // TODO: Agregar todas las fotos del proceso
+      before: `${import.meta.env.BASE_URL}gallery/P1.jpg`,
+      after: `${import.meta.env.BASE_URL}gallery/P7.jpg`,
+      allPhotos: [
+        `${import.meta.env.BASE_URL}gallery/P1.jpg`,
+        `${import.meta.env.BASE_URL}gallery/P2.jpg`,
+        `${import.meta.env.BASE_URL}gallery/P3.jpg`,
+        `${import.meta.env.BASE_URL}gallery/P4.jpg`,
+        `${import.meta.env.BASE_URL}gallery/P5.jpg`,
+        `${import.meta.env.BASE_URL}gallery/P6.jpg`,
+        `${import.meta.env.BASE_URL}gallery/P7.jpg`
+      ]
     },
     {
       id: 2,
@@ -227,7 +235,7 @@ export default function Gallery() {
               {selectedProject.allPhotos.length > 0 ? (
                 <>
                   <img 
-                    src={selectedProject.allPhotos[currentImageIndex] ? `${import.meta.env.BASE_URL}${selectedProject.allPhotos[currentImageIndex].replace('/', '')}` : undefined} 
+                    src={selectedProject.allPhotos[currentImageIndex]} 
                     alt={`Photo ${currentImageIndex + 1}`}
                     className="w-full h-96 object-contain"
                   />
