@@ -79,7 +79,7 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-20">
           
           {/* Logo y nombre de la empresa */}
-          <div className="flex items-center space-x-3 cursor-pointer -ml-16" onClick={() => scrollToSection('hero')}>
+          <div className="flex items-center space-x-3 cursor-pointer md:-ml-16 ml-0" onClick={() => scrollToSection('hero')}>
   {/* Logo del guerrero azteca */}
           <img 
               src={`${import.meta.env.BASE_URL}PCLLC.png`} 
