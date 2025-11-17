@@ -15,7 +15,7 @@ export default function Hero() {
       <div className="max-w-7xl mx-auto text-center">
         <div className="inline-block mb-7">
           <img 
-            src="/PCLogo.png" 
+            src={`${import.meta.env.BASE_URL}PCLogo.png`} 
             alt="Padilla's Concrete Logo" 
             className="w-60 h-60 mx-auto object-contain float-logo"
           />

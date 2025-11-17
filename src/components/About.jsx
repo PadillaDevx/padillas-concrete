@@ -64,7 +64,7 @@ export default function About() {
           {/* Columna derecha - Imagen */}
           <div className="bg-black/40 backdrop-blur-md border border-white/30 rounded-3xl h-96 max-w-[520px] mx-auto flex items-center justify-center">
             <img 
-              src="/Tools.jpeg" 
+              src={`${import.meta.env.BASE_URL}Tools.jpeg`}
               alt="Equipo Padilla's Concrete" 
               className="h-[370px] max-w-[95%] rounded-3xl object-cover shadow-lg"
             />

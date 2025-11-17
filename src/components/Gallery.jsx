@@ -227,7 +227,7 @@ export default function Gallery() {
               {selectedProject.allPhotos.length > 0 ? (
                 <>
                   <img 
-                    src={selectedProject.allPhotos[currentImageIndex]} 
+                    src={selectedProject.allPhotos[currentImageIndex] ? `${import.meta.env.BASE_URL}${selectedProject.allPhotos[currentImageIndex].replace('/', '')}` : undefined} 
                     alt={`Photo ${currentImageIndex + 1}`}
                     className="w-full h-96 object-contain"
                   />

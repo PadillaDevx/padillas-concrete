@@ -82,7 +82,7 @@ export default function Navbar() {
           <div className="flex items-center space-x-3 cursor-pointer -ml-16" onClick={() => scrollToSection('hero')}>
   {/* Logo del guerrero azteca */}
           <img 
-              src="/PCLLC.png" 
+              src={`${import.meta.env.BASE_URL}PCLLC.png`} 
               alt="Padilla's Concrete LLC Logo" 
               className="w-[220px] h-[220px] object-contain"
             />

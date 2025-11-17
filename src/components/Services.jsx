@@ -81,7 +81,7 @@ export default function Services() {
               {/* Icono del servicio */}
               <div className="w-16 h-16 mb-4 flex items-center justify-center">
                 <img 
-                  src={service.icon} 
+                  src={`${import.meta.env.BASE_URL}${service.icon.replace('/', '')}`} 
                   alt={service.name} 
                   className="w-full h-full object-contain"
                 />

@@ -14,7 +14,7 @@ export default function Footer() {
         {/* Logo y nombre de la empresa */}
         <div className="flex items-center justify-center mb-2">
           <img 
-            src="/PCLLC.png" 
+            src={`${import.meta.env.BASE_URL}PCLLC.png`} 
             alt="Padilla's Concrete LLC Logo" 
             className="w-[135px] h-[135px] object-contain"
           />
