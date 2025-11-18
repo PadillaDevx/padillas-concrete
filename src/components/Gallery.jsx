@@ -15,6 +15,20 @@ export default function Gallery() {
   const [selectedProject, setSelectedProject] = useState(null);
   // Estado para controlar qué foto se está viendo en el modal
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  // Estado para swipe en móviles
+  const [touchStartX, setTouchStartX] = useState(null);
+
+  // Soporte para flechas del teclado en el modal
+  React.useEffect(() => {
+    if (!selectedProject) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowLeft') prevImage();
+      if (e.key === 'ArrowRight') nextImage();
+      if (e.key === 'Escape') closeModal();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedProject, currentImageIndex]);
 
   /**
    * Array de proyectos con sus fotos
@@ -231,7 +245,18 @@ export default function Gallery() {
             </div>
 
             {/* Visor de imágenes */}
-            <div className="relative bg-gray-900">
+            <div
+              className="relative bg-gray-900"
+              onTouchStart={e => setTouchStartX(e.touches[0].clientX)}
+              onTouchEnd={e => {
+                if (touchStartX === null) return;
+                const touchEndX = e.changedTouches[0].clientX;
+                const diff = touchStartX - touchEndX;
+                if (diff > 50) nextImage(); // swipe left
+                if (diff < -50) prevImage(); // swipe right
+                setTouchStartX(null);
+              }}
+            >
               {selectedProject.allPhotos.length > 0 ? (
                 <>
                   <img 
