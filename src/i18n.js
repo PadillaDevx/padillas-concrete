@@ -204,9 +204,14 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
+    lng: localStorage.getItem('language') || 'en', // Idioma por defecto inglés
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false
+    },
+    detection: {
+      order: ['localStorage', 'navigator'],
+      caches: ['localStorage']
     }
   });
 

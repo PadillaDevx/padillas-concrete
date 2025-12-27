@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -18,6 +18,32 @@ export default function Gallery() {
   // Estado para swipe en móviles
   const [touchStartX, setTouchStartX] = useState(null);
 
+  /**
+   * Cierra el modal
+   */
+  const closeModal = useCallback(() => {
+    setSelectedProject(null);
+    setCurrentImageIndex(0);
+  }, []);
+
+  /**
+   * Navega a la siguiente foto en el modal
+   */
+  const nextImage = useCallback(() => {
+    if (selectedProject && currentImageIndex < selectedProject.allPhotos.length - 1) {
+      setCurrentImageIndex(currentImageIndex + 1);
+    }
+  }, [selectedProject, currentImageIndex]);
+
+  /**
+   * Navega a la foto anterior en el modal
+   */
+  const prevImage = useCallback(() => {
+    if (currentImageIndex > 0) {
+      setCurrentImageIndex(currentImageIndex - 1);
+    }
+  }, [currentImageIndex]);
+
   // Soporte para flechas del teclado en el modal
   React.useEffect(() => {
     if (!selectedProject) return;
@@ -28,7 +54,7 @@ export default function Gallery() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedProject, currentImageIndex]);
+  }, [selectedProject, currentImageIndex, nextImage, prevImage, closeModal]);
 
   /**
    * Array de proyectos con sus fotos
@@ -116,32 +142,6 @@ export default function Gallery() {
   const openProjectModal = (project) => {
     setSelectedProject(project);
     setCurrentImageIndex(0);
-  };
-
-  /**
-   * Cierra el modal
-   */
-  const closeModal = () => {
-    setSelectedProject(null);
-    setCurrentImageIndex(0);
-  };
-
-  /**
-   * Navega a la siguiente foto en el modal
-   */
-  const nextImage = () => {
-    if (selectedProject && currentImageIndex < selectedProject.allPhotos.length - 1) {
-      setCurrentImageIndex(currentImageIndex + 1);
-    }
-  };
-
-  /**
-   * Navega a la foto anterior en el modal
-   */
-  const prevImage = () => {
-    if (currentImageIndex > 0) {
-      setCurrentImageIndex(currentImageIndex - 1);
-    }
   };
 
   return (
