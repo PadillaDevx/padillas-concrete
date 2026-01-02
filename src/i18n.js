@@ -96,7 +96,8 @@ const resources = {
       },
       footer: {
         description: 'Professional concrete solutions for residential and commercial properties',
-        copyright: '© {{year}} Padilla\'s Concrete LLC. All rights reserved.'
+        copyright: '© {{year}} Padilla\'s Concrete LLC. All rights reserved.',
+        credit: 'Page created and designed by <1>PadillaDevx</1>'
       }
     }
   },
@@ -193,7 +194,8 @@ const resources = {
       },
       footer: {
         description: 'Soluciones profesionales de concreto para propiedades residenciales y comerciales',
-        copyright: '© {{year}} Padilla\'s Concrete LLC. Todos los derechos reservados.'
+        copyright: '© {{year}} Padilla\'s Concrete LLC. Todos los derechos reservados.',
+        credit: 'página creada y diseñada por <1>PadillaDevx</1>'
       }
     }
   }
