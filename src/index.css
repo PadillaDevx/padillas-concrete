@@ -2,65 +2,74 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Background ─── */
 body {
   position: relative;
-  background-color: #1a1a1a; /* Color de respaldo */
+  background-color: #1a1a1a;
 }
 
 body::before {
   content: '';
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url('/Background.jpeg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  inset: 0;
+  background: url('/Background.jpeg') center/cover no-repeat;
   z-index: -2;
-  /* Mejora la nitidez */
   transform: translateZ(0);
-  -webkit-transform: translateZ(0);
   will-change: transform;
 }
 
 body::after {
   content: '';
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.3) 0%,
-    rgba(0, 0, 0, 0.15) 50%,
-    rgba(0, 0, 0, 0.3) 100%
-  );
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, .3), rgba(0, 0, 0, .15) 50%, rgba(0, 0, 0, .3));
   z-index: -1;
   pointer-events: none;
 }
 
-/* Optimización para móviles */
 @media (max-width: 768px) {
   body::before {
     background-attachment: scroll;
-    /* Forzar aceleración por hardware */
     transform: translate3d(0, 0, 0);
-    -webkit-transform: translate3d(0, 0, 0);
   }
 }
 
-.slow-bounce {
-  animation-duration: 3s !important;
+/* ─── Reusable utilities ─── */
+@layer components {
+  .glass-card {
+    @apply bg-black/40 backdrop-blur-md border border-white/30;
+  }
+
+  .text-shadow {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .8));
+  }
+
+  .text-shadow-strong {
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .8));
+  }
+
+  .btn-primary {
+    @apply bg-red-600 text-white font-semibold hover:bg-red-700 transition;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent outline-none transition;
+  }
 }
 
+/* ─── Animations ─── */
 .float-logo {
   animation: floatLogo 3s ease-in-out infinite;
 }
 
 @keyframes floatLogo {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-24px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-24px);
+  }
 }
