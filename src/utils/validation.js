@@ -129,6 +129,9 @@ export const validateFormData = (formData) => {
 export const sanitizeFormData = (formData) => {
   return {
     name: sanitizeText(formData.name),
+    // Email is only trimmed and lowercased, not sanitized with sanitizeText
+    // because valid emails can contain characters like periods, hyphens, etc.
+    // The isValidEmail function already ensures the format is safe
     email: formData.email.trim().toLowerCase(),
     phone: formData.phone.trim(),
     service: formData.service,

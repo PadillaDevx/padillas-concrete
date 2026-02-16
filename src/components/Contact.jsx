@@ -129,8 +129,10 @@ export default function Contact() {
       // Eliminar esta línea cuando se implemente el backend real
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Log de datos para verificación (remover en producción)
-      console.log('Form data ready for backend:', dataToSend);
+      // Debug log (only in development)
+      if (import.meta.env.DEV) {
+        console.log('Form data ready for backend:', dataToSend);
+      }
       
       // Cerrar loading y mostrar éxito
       closeAlert();
