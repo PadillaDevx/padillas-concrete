@@ -21,7 +21,7 @@ export default function About() {
             <div className="space-y-4">
               {FEATURES.map((key) => (
                 <div key={key} className="flex items-start space-x-3">
-                  <CheckCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-1" />
+                  <CheckCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-1" aria-hidden="true" />
                   <div>
                     <h3 className="font-semibold text-white text-shadow">{t(`about.${key}.title`)}</h3>
                     <p className="text-white text-shadow">{t(`about.${key}.description`)}</p>
@@ -34,8 +34,9 @@ export default function About() {
           <div className="glass-card rounded-3xl overflow-hidden">
             <img
               src={`${BASE_URL}Tools.jpeg`}
-              alt="Equipo Padilla's Concrete"
+              alt={t('about.title')}
               className="w-full h-full object-cover min-h-[300px] md:min-h-[400px]"
+              loading="lazy"
             />
           </div>
         </div>

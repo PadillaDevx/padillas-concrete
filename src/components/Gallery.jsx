@@ -69,7 +69,7 @@ export default function Gallery() {
                 ].map(({ src, label, pos }) => (
                   <div key={label} className="relative h-48 bg-black/60">
                     {src ? (
-                      <img src={src} alt={label} className="w-full h-full object-cover" />
+                      <img src={src} alt={`${project.title} - ${label}`} className="w-full h-full object-cover" loading="lazy" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-white">{label}</div>
                     )}
@@ -85,7 +85,7 @@ export default function Gallery() {
                   onClick={() => { setSelectedProject(project); setCurrentIndex(0); }}
                   className="w-full btn-primary py-3 rounded-lg"
                 >
-                  View Process Photos
+                  {t('gallery.viewPhotos')}
                 </button>
               </div>
             </div>

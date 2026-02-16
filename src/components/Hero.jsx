@@ -26,7 +26,7 @@ export default function Hero() {
             className="btn-primary px-8 py-4 rounded-full text-lg inline-flex items-center space-x-2"
           >
             <span>{t('hero.cta')}</span>
-            <span className="text-2xl">→</span>
+            <span className="text-2xl" aria-hidden="true">→</span>
           </button>
         </div>
       </div>

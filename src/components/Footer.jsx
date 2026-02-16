@@ -22,7 +22,7 @@ export default function Footer() {
           <Trans
             i18nKey="footer.credit"
             components={{
-              1: <a href="https://padilladevx.com/" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-400 transition-colors" />,
+              1: <a href="https://padilladevx.com/" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-400 transition-colors" aria-label={t('a11y.creditLink')} />,
             }}
           />
         </p>

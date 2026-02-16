@@ -33,6 +33,7 @@ export default {
         subtitle: 'Quality craftsmanship in every project',
         before: 'Before',
         after: 'After',
+        viewPhotos: 'View Process Photos',
     },
     contact: {
         title: 'Ready to start your project?',
@@ -77,5 +78,18 @@ export default {
         description: 'Professional concrete solutions for residential and commercial properties',
         copyright: "© {{year}} Padilla's Concrete LLC. All rights reserved.",
         credit: 'Page created and designed by <1>PadillaDevx</1>',
+    },
+    a11y: {
+        skipToContent: 'Skip to main content',
+        openMenu: 'Open navigation menu',
+        closeMenu: 'Close navigation menu',
+        goToHome: "Go to home - Padilla's Concrete LLC",
+        selectLanguage: 'Select language',
+        previousPhoto: 'Previous photo',
+        nextPhoto: 'Next photo',
+        closeModal: 'Close photo viewer',
+        photoViewer: 'Photo viewer',
+        photoCounter: 'Photo {{current}} of {{total}}',
+        creditLink: 'Visit PadillaDevx website (opens in new tab)',
     },
 };

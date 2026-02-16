@@ -29,7 +29,7 @@ export default function Services() {
                 className="glass-card rounded-2xl p-8 hover:bg-black/50 hover:border-red-600 hover:shadow-xl transition-all duration-300"
               >
                 <div className="w-16 h-16 mb-4 flex items-center justify-center">
-                  <img src={`${BASE_URL}${icon}`} alt={t(`${key}.name`)} className="w-full h-full object-contain" />
+                  <img src={`${BASE_URL}${icon}`} alt="" aria-hidden="true" className="w-full h-full object-contain" loading="lazy" />
                 </div>
                 <h3 className="text-2xl font-bold text-white mb-3 text-shadow">{t(`${key}.name`)}</h3>
                 <p className="text-white text-shadow">{t(`${key}.description`)}</p>

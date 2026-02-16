@@ -50,7 +50,7 @@ export default function Contact() {
       ...prev,
       [name]: value
     }));
-    
+
     // Limpiar error del campo cuando el usuario comienza a escribir
     if (fieldErrors[name]) {
       setFieldErrors(prev => {
@@ -66,16 +66,16 @@ export default function Contact() {
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Prevenir doble envío
     if (isSubmitting) return;
-    
+
     // Validar honeypot (anti-spam)
     if (!validateHoneypot(formData.honeypot)) {
       showError(t('validation.errorTitle'), t('validation.spamDetected'));
       return;
     }
-    
+
     // Verificar rate limiting
     const rateLimitCheck = contactFormLimiter.checkLimit();
     if (!rateLimitCheck.allowed) {
@@ -85,13 +85,13 @@ export default function Contact() {
       );
       return;
     }
-    
+
     // Sanitizar datos
     const sanitizedData = sanitizeFormData(formData);
-    
+
     // Validar datos
     const validation = validateFormData(sanitizedData);
-    
+
     if (!validation.isValid) {
       // Mostrar errores de validación
       const errorMessages = Object.values(validation.errors).map(errorKey => t(errorKey));
@@ -99,18 +99,18 @@ export default function Contact() {
       setFieldErrors(validation.errors);
       return;
     }
-    
+
     // Limpiar errores previos
     setFieldErrors({});
-    
+
     // Iniciar envío
     setIsSubmitting(true);
     showLoading(t('contact.form.sending'));
-    
+
     try {
       // Registrar intento de envío
       contactFormLimiter.recordAttempt();
-      
+
       // Preparar datos para el backend (Cloudflare Workers)
       const dataToSend = {
         ...sanitizedData,
@@ -118,7 +118,7 @@ export default function Contact() {
         userAgent: navigator.userAgent,
         language: navigator.language
       };
-      
+
       // TODO: Integrar con Cloudflare Workers
       // Descomentar el siguiente código cuando esté listo el backend:
       // const response = await fetch('/api/contact', {
@@ -128,26 +128,26 @@ export default function Contact() {
       // });
       // 
       // if (!response.ok) throw new Error('Failed to send');
-      
+
       // Simulación de envío exitoso (2 segundos)
       // Eliminar esta línea cuando se implemente el backend real
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       // Debug log (only in development)
       if (import.meta.env.DEV) {
         console.log('Form data ready for backend:', dataToSend);
       }
-      
+
       // Cerrar loading y mostrar éxito
       closeAlert();
       await showSuccess(
         t('validation.successTitle'),
         t('validation.successMessage')
       );
-      
+
       // Limpiar el formulario
       setFormData(INITIAL_FORM);
-      
+
     } catch (error) {
       // Cerrar loading y mostrar error
       closeAlert();
@@ -205,9 +205,8 @@ export default function Contact() {
                 value={formData.name}
                 onChange={handleChange}
                 required
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent outline-none transition ${
-                  fieldErrors.name ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent outline-none transition ${fieldErrors.name ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 placeholder={t('contact.form.namePlaceholder')}
               />
               {fieldErrors.name && (
@@ -229,9 +228,8 @@ export default function Contact() {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent outline-none transition ${
-                    fieldErrors.email ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent outline-none transition ${fieldErrors.email ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   placeholder={t('contact.form.emailPlaceholder')}
                 />
                 {fieldErrors.email && (
@@ -251,9 +249,8 @@ export default function Contact() {
                   value={formData.phone}
                   onChange={handleChange}
                   required
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent outline-none transition ${
-                    fieldErrors.phone ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent outline-none transition ${fieldErrors.phone ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   placeholder={t('contact.form.phonePlaceholder')}
                 />
                 {fieldErrors.phone && (
@@ -273,9 +270,8 @@ export default function Contact() {
                 value={formData.service}
                 onChange={handleChange}
                 required
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent outline-none transition bg-white ${
-                  fieldErrors.service ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent outline-none transition bg-white ${fieldErrors.service ? 'border-red-500' : 'border-gray-300'
+                  }`}
               >
                 <option value="">{t('contact.form.selectService')}</option>
                 {SERVICE_OPTIONS.map(({ value, key }) => (
@@ -301,9 +297,8 @@ export default function Contact() {
                 onChange={handleChange}
                 required
                 rows="5"
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent outline-none transition resize-none ${
-                  fieldErrors.message ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent outline-none transition resize-none ${fieldErrors.message ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 placeholder={t('contact.form.messagePlaceholder')}
               />
               {fieldErrors.message && (
@@ -329,11 +324,10 @@ export default function Contact() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`w-full py-4 rounded-lg font-semibold text-white transition ${
-                isSubmitting 
-                  ? 'bg-gray-400 cursor-not-allowed' 
+              className={`w-full py-4 rounded-lg font-semibold text-white transition ${isSubmitting
+                  ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-red-600 hover:bg-red-700'
-              }`}
+                }`}
             >
               {isSubmitting ? t('contact.form.sending') : t('contact.form.send')}
             </button>
