@@ -192,7 +192,7 @@ export default function Contact() {
             {t('contact.form.title')}
           </h3>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} noValidate className="space-y-6">
             {/* Campo: Nombre */}
             <div>
               <label htmlFor="name" className="block text-white font-semibold mb-2 text-shadow">
