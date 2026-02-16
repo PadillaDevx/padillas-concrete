@@ -94,6 +94,21 @@ const resources = {
           sending: 'Sending...'
         }
       },
+      validation: {
+        nameError: 'Please enter a valid name (at least 2 characters)',
+        emailError: 'Please enter a valid email address',
+        phoneError: 'Please enter a valid US phone number',
+        serviceError: 'Please select a service',
+        messageError: 'Please enter a message (at least 10 characters)',
+        errorsTitle: 'Please fix the following errors:',
+        rateLimitTitle: 'Too Many Attempts',
+        rateLimitMessage: 'Please wait {{seconds}} seconds before submitting again',
+        successTitle: 'Message Sent!',
+        successMessage: 'Thank you for contacting us. We will get back to you soon.',
+        errorTitle: 'Sending Failed',
+        errorMessage: 'There was an error sending your message. Please try again later or contact us directly.',
+        spamDetected: 'Spam detected. Please try again.'
+      },
       footer: {
         description: 'Professional concrete solutions for residential and commercial properties',
         copyright: '© {{year}} Padilla\'s Concrete LLC. All rights reserved.',
@@ -191,6 +206,21 @@ const resources = {
           send: 'Enviar Mensaje',
           sending: 'Enviando...'
         }
+      },
+      validation: {
+        nameError: 'Por favor ingrese un nombre válido (al menos 2 caracteres)',
+        emailError: 'Por favor ingrese un correo electrónico válido',
+        phoneError: 'Por favor ingrese un número de teléfono válido',
+        serviceError: 'Por favor seleccione un servicio',
+        messageError: 'Por favor ingrese un mensaje (al menos 10 caracteres)',
+        errorsTitle: 'Por favor corrija los siguientes errores:',
+        rateLimitTitle: 'Demasiados Intentos',
+        rateLimitMessage: 'Por favor espere {{seconds}} segundos antes de enviar nuevamente',
+        successTitle: '¡Mensaje Enviado!',
+        successMessage: 'Gracias por contactarnos. Nos comunicaremos con usted pronto.',
+        errorTitle: 'Error al Enviar',
+        errorMessage: 'Hubo un error al enviar su mensaje. Por favor intente nuevamente más tarde o contáctenos directamente.',
+        spamDetected: 'Spam detectado. Por favor intente nuevamente.'
       },
       footer: {
         description: 'Soluciones profesionales de concreto para propiedades residenciales y comerciales',
