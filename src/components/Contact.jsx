@@ -168,6 +168,7 @@ export default function Contact() {
 
         {/* Contact info cards */}
         <div className="grid md:grid-cols-3 gap-8 mb-16">
+          {/* eslint-disable-next-line no-unused-vars */}
           {CONTACT_INFO.map(({ Icon, labelKey, href, text }) => (
             <div key={labelKey} className="flex flex-col items-center text-center glass-card rounded-3xl p-6">
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
