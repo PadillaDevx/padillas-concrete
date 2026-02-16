@@ -10,10 +10,12 @@
  */
 export const sanitizeText = (text) => {
   if (!text) return '';
-  // Remove HTML tags and trim whitespace
+  // Remove all special characters that could be used for XSS
+  // This is a comprehensive approach that removes all potential HTML injection vectors
   return text
-    .replace(/<[^>]*>/g, '')
-    .replace(/[<>'"]/g, '')
+    .replace(/[<>'"&]/g, '') // Remove HTML special characters
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
     .trim();
 };
 
