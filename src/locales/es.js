@@ -58,6 +58,21 @@ export default {
             sending: 'Enviando...',
         },
     },
+    validation: {
+        nameError: 'Por favor ingrese un nombre válido (al menos 2 caracteres)',
+        emailError: 'Por favor ingrese un correo electrónico válido',
+        phoneError: 'Por favor ingrese un número de teléfono válido',
+        serviceError: 'Por favor seleccione un servicio',
+        messageError: 'Por favor ingrese un mensaje (al menos 10 caracteres)',
+        errorsTitle: 'Por favor corrija los siguientes errores:',
+        rateLimitTitle: 'Demasiados Intentos',
+        rateLimitMessage: 'Por favor espere {{seconds}} segundos antes de enviar nuevamente',
+        successTitle: '¡Mensaje Enviado!',
+        successMessage: 'Gracias por contactarnos. Nos comunicaremos con usted pronto.',
+        errorTitle: 'Error al Enviar',
+        errorMessage: 'Hubo un error al enviar su mensaje. Por favor intente nuevamente más tarde o contáctenos directamente.',
+        spamDetected: 'Spam detectado. Por favor intente nuevamente.'
+    },
     footer: {
         description: 'Soluciones profesionales de concreto para propiedades residenciales y comerciales',
         copyright: "© {{year}} Padilla's Concrete LLC. Todos los derechos reservados.",
