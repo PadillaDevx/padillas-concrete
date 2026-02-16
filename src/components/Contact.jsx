@@ -1,9 +1,28 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Phone, Mail, MapPin } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import SectionHeader from './SectionHeader';
 import { validateFormData, sanitizeFormData } from '../utils/validation';
 import { showSuccess, showError, showValidationErrors, showLoading, closeAlert } from '../utils/alerts';
 import { contactFormLimiter, validateHoneypot } from '../utils/spamPrevention';
+
+const INITIAL_FORM = { name: '', email: '', phone: '', service: '', message: '', honeypot: '' };
+
+const CONTACT_INFO = [
+  { Icon: Phone, labelKey: 'contact.phone', href: 'tel:+17195657189', text: '(719) 565-7189' },
+  { Icon: Mail, labelKey: 'contact.email', href: 'mailto:vpadilla604@gmail.com', text: 'vpadilla604@gmail.com' },
+  { Icon: MapPin, labelKey: 'contact.location', text: null },
+];
+
+const SERVICE_OPTIONS = [
+  { value: 'Patios', key: 'services.service1.name' },
+  { value: 'Driveways', key: 'services.service2.name' },
+  { value: 'Walkways', key: 'services.service3.name' },
+  { value: 'Sidewalks', key: 'services.service4.name' },
+  { value: 'Concrete Reinforced', key: 'services.service5.name' },
+  { value: 'Stamped Concrete', key: 'services.service6.name' },
+  { value: 'Other', key: 'contact.form.other' },
+];
 
 /**
  * Componente Contact - Sección de contacto
@@ -21,25 +40,10 @@ import { contactFormLimiter, validateHoneypot } from '../utils/spamPrevention';
  */
 export default function Contact() {
   const { t } = useTranslation();
-  // Estado para manejar los datos del formulario
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    service: '',
-    message: '',
-    honeypot: '' // Campo oculto anti-spam
-  });
-
-  // Estado para manejar el envío del formulario
+  const [formData, setFormData] = useState(INITIAL_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Estado para errores de validación por campo
   const [fieldErrors, setFieldErrors] = useState({});
 
-  /**
-   * Maneja los cambios en los inputs del formulario
-   */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -142,14 +146,7 @@ export default function Contact() {
       );
       
       // Limpiar el formulario
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        service: '',
-        message: '',
-        honeypot: ''
-      });
+      setFormData(INITIAL_FORM);
       
     } catch (error) {
       // Cerrar loading y mostrar error
@@ -167,69 +164,37 @@ export default function Contact() {
   return (
     <section id="contact" className="py-20 px-4">
       <div className="max-w-6xl mx-auto">
-        
-        {/* Encabezado de la sección */}
-        <div className="text-center mb-16 bg-black/40 backdrop-blur-sm rounded-3xl p-8 max-w-4xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)]">
-            {t('contact.title')}
-          </h2>
-          <p className="text-xl text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-            {t('contact.subtitle')}
-          </p>
-        </div>
+        <SectionHeader titleKey="contact.title" subtitleKey="contact.subtitle" />
 
-        {/* Información de contacto */}
+        {/* Contact info cards */}
         <div className="grid md:grid-cols-3 gap-8 mb-16">
-          
-          {/* Teléfono - TODO: ACTUALIZAR CON NÚMERO REAL */}
-          <div className="flex flex-col items-center text-center bg-black/40 backdrop-blur-md rounded-3xl p-6 border border-white/30">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-              <Phone className="w-8 h-8 text-red-600" />
+          {CONTACT_INFO.map(({ Icon, labelKey, href, text }) => (
+            <div key={labelKey} className="flex flex-col items-center text-center glass-card rounded-3xl p-6">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                <Icon className="w-8 h-8 text-red-600" />
+              </div>
+              <h3 className="font-bold text-white mb-2 text-shadow">{t(labelKey)}</h3>
+              {href ? (
+                <a href={href} className="text-white hover:text-red-400 transition text-shadow">
+                  {text}
+                </a>
+              ) : (
+                <p className="text-white text-shadow">{t('contact.address')}</p>
+              )}
             </div>
-            <h3 className="font-bold text-white mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{t('contact.phone')}</h3>
-            <a 
-              href="tel:+15551234567" 
-              className="text-white hover:text-red-400 transition drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
-            >
-              (719) 565-7189
-            </a>
-          </div>
-
-          {/* Email - TODO: ACTUALIZAR CON EMAIL REAL */}
-          <div className="flex flex-col items-center text-center bg-black/40 backdrop-blur-md rounded-3xl p-6 border border-white/30">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-              <Mail className="w-8 h-8 text-red-600" />
-            </div>
-            <h3 className="font-bold text-white mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{t('contact.email')}</h3>
-            <a 
-              href="mailto:info@padillasconcrete.com" 
-              className="text-white hover:text-red-400 transition drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
-            >
-              vpadilla604@gmail.com
-            </a>
-          </div>
-
-          {/* Ubicación */}
-          <div className="flex flex-col items-center text-center bg-black/40 backdrop-blur-md rounded-3xl p-6 border border-white/30">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-              <MapPin className="w-8 h-8 text-red-600" />
-            </div>
-            <h3 className="font-bold text-white mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{t('contact.location')}</h3>
-            <p className="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{t('contact.address')}</p>
-          </div>
+          ))}
         </div>
 
         {/* Formulario de contacto */}
-        <div className="max-w-2xl mx-auto bg-black/40 backdrop-blur-md border border-white/30 rounded-2xl shadow-xl p-8">
-          <h3 className="text-2xl font-bold text-white mb-6 text-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+        <div className="max-w-2xl mx-auto glass-card rounded-2xl shadow-xl p-8">
+          <h3 className="text-2xl font-bold text-white mb-6 text-center text-shadow">
             {t('contact.form.title')}
           </h3>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            
             {/* Campo: Nombre */}
             <div>
-              <label htmlFor="name" className="block text-white font-semibold mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+              <label htmlFor="name" className="block text-white font-semibold mb-2 text-shadow">
                 {t('contact.form.name')} *
               </label>
               <input
@@ -253,7 +218,7 @@ export default function Contact() {
             <div className="grid md:grid-cols-2 gap-6">
               {/* Campo: Email */}
               <div>
-                <label htmlFor="email" className="block text-white font-semibold mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                <label htmlFor="email" className="block text-white font-semibold mb-2 text-shadow">
                   {t('contact.form.email')} *
                 </label>
                 <input
@@ -275,7 +240,7 @@ export default function Contact() {
 
               {/* Campo: Teléfono */}
               <div>
-                <label htmlFor="phone" className="block text-white font-semibold mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                <label htmlFor="phone" className="block text-white font-semibold mb-2 text-shadow">
                   {t('contact.form.phone')} *
                 </label>
                 <input
@@ -298,7 +263,7 @@ export default function Contact() {
 
             {/* Campo: Servicio */}
             <div>
-              <label htmlFor="service" className="block text-white font-semibold mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+              <label htmlFor="service" className="block text-white font-semibold mb-2 text-shadow">
                 {t('contact.form.service')} *
               </label>
               <select
@@ -312,13 +277,11 @@ export default function Contact() {
                 }`}
               >
                 <option value="">{t('contact.form.selectService')}</option>
-                <option value="Patios">{t('services.service1.name')}</option>
-                <option value="Driveways">{t('services.service2.name')}</option>
-                <option value="Walkways">{t('services.service3.name')}</option>
-                <option value="Sidewalks">{t('services.service4.name')}</option>
-                <option value="Concrete Reinforced">{t('services.service5.name')}</option>
-                <option value="Stamped Concrete">{t('services.service6.name')}</option>
-                <option value="Other">{t('contact.form.other')}</option>
+                {SERVICE_OPTIONS.map(({ value, key }) => (
+                  <option key={value} value={value}>
+                    {t(key)}
+                  </option>
+                ))}
               </select>
               {fieldErrors.service && (
                 <p className="text-red-400 text-sm mt-1">{t(fieldErrors.service)}</p>
@@ -327,7 +290,7 @@ export default function Contact() {
 
             {/* Campo: Mensaje */}
             <div>
-              <label htmlFor="message" className="block text-white font-semibold mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+              <label htmlFor="message" className="block text-white font-semibold mb-2 text-shadow">
                 {t('contact.form.message')} *
               </label>
               <textarea
