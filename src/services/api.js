@@ -33,6 +33,13 @@ async function apiRequest(endpoint, options = {}) {
     const data = await response.json();
 
     if (!response.ok) {
+        // Handle session expiration
+        if (response.status === 401) {
+            localStorage.removeItem('adminToken');
+            const error = new Error(data.error || 'Session expired');
+            error.isAuthError = true;
+            throw error;
+        }
         throw new Error(data.error || 'Request failed');
     }
 

@@ -69,6 +69,7 @@ export default function AdminDashboard() {
         if (isAdmin) {
             loadUsers();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isAdmin]);
 
     // Show password change modal if mustChangePassword is true
@@ -177,7 +178,11 @@ export default function AdminDashboard() {
         try {
             const data = await getProjects();
             setProjects(data);
-        } catch {
+        } catch (error) {
+            if (error.isAuthError) {
+                handleAuthError();
+                return;
+            }
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
@@ -187,6 +192,19 @@ export default function AdminDashboard() {
         } finally {
             setLoading(false);
         }
+    }
+
+    function handleAuthError() {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Session Expired',
+            text: 'Your session has expired. Please login again.',
+            confirmButtonColor: '#dc2626',
+            allowOutsideClick: false,
+        }).then(() => {
+            logout();
+            navigate('/admin');
+        });
     }
 
     async function handleLogout() {
@@ -242,7 +260,7 @@ export default function AdminDashboard() {
 
                 const data = await createProject(formValues);
                 setProjects([...projects, data.project]);
-                
+
                 // Auto-expand the new project so user can add photos
                 setExpandedProject(data.project.id);
 
@@ -254,6 +272,10 @@ export default function AdminDashboard() {
                     confirmButtonText: 'Got it!',
                 });
             } catch (error) {
+                if (error.isAuthError) {
+                    handleAuthError();
+                    return;
+                }
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
@@ -310,6 +332,10 @@ export default function AdminDashboard() {
                     showConfirmButton: false,
                 });
             } catch (error) {
+                if (error.isAuthError) {
+                    handleAuthError();
+                    return;
+                }
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
@@ -351,6 +377,10 @@ export default function AdminDashboard() {
                     showConfirmButton: false,
                 });
             } catch (error) {
+                if (error.isAuthError) {
+                    handleAuthError();
+                    return;
+                }
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
@@ -418,6 +448,10 @@ export default function AdminDashboard() {
                 showConfirmButton: false,
             });
         } catch (error) {
+            if (error.isAuthError) {
+                handleAuthError();
+                return;
+            }
             Swal.fire({
                 icon: 'error',
                 title: 'Upload Failed',
@@ -470,6 +504,10 @@ export default function AdminDashboard() {
                     showConfirmButton: false,
                 });
             } catch (error) {
+                if (error.isAuthError) {
+                    handleAuthError();
+                    return;
+                }
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',

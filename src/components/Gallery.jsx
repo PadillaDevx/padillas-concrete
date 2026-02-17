@@ -98,40 +98,40 @@ export default function Gallery() {
                 key={project.id}
                 className="glass-card rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300"
               >
-              <div className="p-4">
-                <h3 className="text-xl font-bold text-white mb-1 text-shadow">{project.title}</h3>
-                <p className="text-white text-sm mb-2 text-shadow">{project.location}</p>
-              </div>
+                <div className="p-4">
+                  <h3 className="text-xl font-bold text-white mb-1 text-shadow">{project.title}</h3>
+                  <p className="text-white text-sm mb-2 text-shadow">{project.location}</p>
+                </div>
 
-              <div className="grid grid-cols-2">
-                {[
-                  { src: project.before, label: t('gallery.before'), pos: 'left-2' },
-                  { src: project.after, label: t('gallery.after'), pos: 'right-2' },
-                ].map(({ src, label, pos }) => (
-                  <div key={label} className="relative h-48 bg-black/60">
-                    {src ? (
-                      <img src={src} alt={`${project.title} - ${label}`} className="w-full h-full object-cover" loading="lazy" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-white">{label}</div>
-                    )}
-                    <div className={`absolute top-2 ${pos} bg-black/70 text-white px-3 py-1 rounded-full text-sm font-semibold`}>
-                      {label}
+                <div className="grid grid-cols-2">
+                  {[
+                    { src: project.before, label: t('gallery.before'), pos: 'left-2' },
+                    { src: project.after, label: t('gallery.after'), pos: 'right-2' },
+                  ].map(({ src, label, pos }) => (
+                    <div key={label} className="relative h-48 bg-black/60">
+                      {src ? (
+                        <img src={src} alt={`${project.title} - ${label}`} className="w-full h-full object-cover" loading="lazy" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-white">{label}</div>
+                      )}
+                      <div className={`absolute top-2 ${pos} bg-black/70 text-white px-3 py-1 rounded-full text-sm font-semibold`}>
+                        {label}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
 
-              <div className="p-4">
-                <button
-                  onClick={() => { setSelectedProject(project); setCurrentIndex(0); }}
-                  className="w-full btn-primary py-3 rounded-lg"
-                >
-                  {t('gallery.viewPhotos')}
-                </button>
+                <div className="p-4">
+                  <button
+                    onClick={() => { setSelectedProject(project); setCurrentIndex(0); }}
+                    className="w-full btn-primary py-3 rounded-lg"
+                  >
+                    {t('gallery.viewPhotos')}
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
         )}
       </div>
 
