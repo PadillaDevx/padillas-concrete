@@ -46,7 +46,7 @@ export default function AdminDashboard() {
     try {
       const data = await getProjects();
       setProjects(data);
-    } catch (err) {
+    } catch {
       Swal.fire({
         icon: 'error',
         title: 'Error',
