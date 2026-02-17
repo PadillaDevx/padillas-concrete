@@ -40,21 +40,34 @@ const Icons = {
     </svg>
   ),
   
-  // Walkway: Curved path with stepping stones
+  // Walkway: Concrete path in perspective with landscaping
   walkway: (
     <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
-      {/* Path outline */}
-      <path d="M8 60c8-16 12-24 24-32s20-12 28-20" strokeWidth="2.5" />
-      <path d="M16 60c8-14 10-20 20-28s16-12 24-20" strokeWidth="2.5" />
-      {/* Stepping stones */}
-      <ellipse cx="14" cy="56" rx="4" ry="2" fill="currentColor" fillOpacity="0.3" />
-      <ellipse cx="24" cy="46" rx="4" ry="2" fill="currentColor" fillOpacity="0.3" />
-      <ellipse cx="32" cy="36" rx="4" ry="2" fill="currentColor" fillOpacity="0.3" />
-      <ellipse cx="42" cy="26" rx="4" ry="2" fill="currentColor" fillOpacity="0.3" />
-      <ellipse cx="52" cy="16" rx="4" ry="2" fill="currentColor" fillOpacity="0.3" />
-      {/* Grass/plants decoration */}
-      <path d="M4 54c2-4 4-4 4 0M60 10c-2-4-4-4-4 0" strokeWidth="1.5" />
-      <path d="M6 58c1-3 3-3 3 0M58 14c-1-3-3-3-3 0" strokeWidth="1.5" />
+      {/* Walkway path in perspective */}
+      <path d="M20 60L28 8h8L44 60z" fill="currentColor" fillOpacity="0.15" />
+      {/* Walkway edges */}
+      <path d="M20 60L28 8" strokeWidth="2" />
+      <path d="M44 60L36 8" strokeWidth="2" />
+      {/* Concrete section lines */}
+      <path d="M21 52h22" strokeWidth="1.5" />
+      <path d="M23 44h18" strokeWidth="1.5" />
+      <path d="M25 36h14" strokeWidth="1.5" />
+      <path d="M26 28h12" strokeWidth="1.5" />
+      <path d="M27 20h10" strokeWidth="1.5" />
+      <path d="M28 12h8" strokeWidth="1.5" />
+      {/* Landscaping - left side bushes */}
+      <ellipse cx="10" cy="50" rx="6" ry="4" fill="currentColor" fillOpacity="0.2" />
+      <ellipse cx="12" cy="38" rx="5" ry="3" fill="currentColor" fillOpacity="0.15" />
+      <ellipse cx="14" cy="28" rx="4" ry="2.5" fill="currentColor" fillOpacity="0.1" />
+      {/* Landscaping - right side bushes */}
+      <ellipse cx="54" cy="50" rx="6" ry="4" fill="currentColor" fillOpacity="0.2" />
+      <ellipse cx="52" cy="38" rx="5" ry="3" fill="currentColor" fillOpacity="0.15" />
+      <ellipse cx="50" cy="28" rx="4" ry="2.5" fill="currentColor" fillOpacity="0.1" />
+      {/* Small flowers/plants */}
+      <circle cx="6" cy="56" r="2" fill="currentColor" fillOpacity="0.25" />
+      <circle cx="58" cy="56" r="2" fill="currentColor" fillOpacity="0.25" />
+      <circle cx="16" cy="46" r="1.5" fill="currentColor" fillOpacity="0.2" />
+      <circle cx="48" cy="46" r="1.5" fill="currentColor" fillOpacity="0.2" />
     </svg>
   ),
   
