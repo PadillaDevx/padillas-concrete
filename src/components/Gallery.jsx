@@ -1,21 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BASE_URL } from '../utils';
 import { getProjects } from '../services/api';
 import SectionHeader from './SectionHeader';
 import PhotoModal from './PhotoModal';
-
-// Static projects (existing photos in public folder)
-const STATIC_PROJECTS = [
-  {
-    id: 'static-1',
-    title: 'Residential Driveway',
-    location: 'Luverne, MN',
-    before: `${BASE_URL}gallery/P1.jpg`,
-    after: `${BASE_URL}gallery/P7.jpg`,
-    allPhotos: Array.from({ length: 7 }, (_, i) => `${BASE_URL}gallery/P${i + 1}.jpg`),
-  },
-];
 
 // Transform API project to display format
 function transformApiProject(project) {
@@ -37,25 +24,27 @@ function transformApiProject(project) {
 
 export default function Gallery() {
   const { t } = useTranslation();
-  const [projects, setProjects] = useState(STATIC_PROJECTS);
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedProject, setSelectedProject] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [touchStartX, setTouchStartX] = useState(null);
 
-  // Fetch dynamic projects from API
+  // Fetch projects from API
   useEffect(() => {
     async function fetchProjects() {
       try {
+        setLoading(true);
         const apiProjects = await getProjects();
         const transformed = apiProjects
           .filter(p => p.photos?.length > 0 || p.beforePhoto || p.afterPhoto)
           .map(transformApiProject);
 
-        // Combine static and API projects
-        setProjects([...STATIC_PROJECTS, ...transformed]);
+        setProjects(transformed);
       } catch (error) {
         console.error('Failed to fetch gallery projects:', error);
-        // Keep showing static projects on error
+      } finally {
+        setLoading(false);
       }
     }
 
@@ -92,12 +81,23 @@ export default function Gallery() {
       <div className="max-w-7xl mx-auto">
         <SectionHeader titleKey="gallery.title" subtitleKey="gallery.subtitle" />
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {projects.map((project) => (
-            <div
-              key={project.id}
-              className="glass-card rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300"
-            >
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
+          </div>
+        ) : projects.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">🏗️</div>
+            <h3 className="text-xl font-semibold text-white mb-2">{t('gallery.noProjects', 'Coming Soon')}</h3>
+            <p className="text-gray-400">{t('gallery.noProjectsDesc', 'We are preparing our gallery. Check back soon!')}</p>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {projects.map((project) => (
+              <div
+                key={project.id}
+                className="glass-card rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300"
+              >
               <div className="p-4">
                 <h3 className="text-xl font-bold text-white mb-1 text-shadow">{project.title}</h3>
                 <p className="text-white text-sm mb-2 text-shadow">{project.location}</p>
@@ -132,6 +132,7 @@ export default function Gallery() {
             </div>
           ))}
         </div>
+        )}
       </div>
 
       <PhotoModal

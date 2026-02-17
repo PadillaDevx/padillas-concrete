@@ -34,6 +34,8 @@ export default {
         before: 'Antes',
         after: 'Después',
         viewPhotos: 'Ver Fotos del Proceso',
+        noProjects: 'Próximamente',
+        noProjectsDesc: 'Estamos preparando nuestra galería. ¡Vuelve pronto!',
     },
     contact: {
         title: '¿Listo para comenzar su proyecto?',
