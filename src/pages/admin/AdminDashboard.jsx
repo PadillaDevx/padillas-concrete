@@ -1,10 +1,12 @@
-// =============================================================================
-// Admin Dashboard - Project & Photo Management
-// =============================================================================
-
+/**
+ * Admin Dashboard - Project & Photo Management
+ * Refactored to use modular components and hooks
+ */
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useAdminDialogs } from '../../hooks/useAdminDialogs';
+import { AdminHeader, ProjectCard, UsersTable } from '../../components/admin';
 import {
     getProjects,
     createProject,
@@ -18,153 +20,60 @@ import {
     updateUser,
     deleteUser,
 } from '../../services/api';
-import Swal from 'sweetalert2';
-import {
-    LogOut,
-    Plus,
-    Trash2,
-    Edit,
-    Image,
-    Upload,
-    X,
-    ChevronDown,
-    ChevronUp,
-    ChevronLeft,
-    ChevronRight,
-    Home,
-    Loader2,
-    Users,
-    Key,
-    UserPlus,
-    Settings,
-    GripVertical,
-} from 'lucide-react';
+import { Image, Users, Plus, Loader2 } from 'lucide-react';
 
 export default function AdminDashboard() {
     const { user, logout, updateUser: updateAuthUser } = useAuth();
     const navigate = useNavigate();
+    
+    // State
     const [projects, setProjects] = useState([]);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [expandedProject, setExpandedProject] = useState(null);
+    const [activeTab, setActiveTab] = useState('projects');
+    
+    // File upload refs
     const fileInputRef = useRef(null);
-    const [uploadingTo, setUploadingTo] = useState(null);
-    const [uploadType, setUploadType] = useState('gallery');
-    const [activeTab, setActiveTab] = useState('projects'); // 'projects' or 'users'
-    const [showUserMenu, setShowUserMenu] = useState(false);
-    const userMenuRef = useRef(null);
-
+    const [uploadTarget, setUploadTarget] = useState(null); // { projectId, type }
+    
     const isAdmin = user?.role === 'admin';
 
-    // Close user menu when clicking outside
-    useEffect(() => {
-        function handleClickOutside(event) {
-            if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
-                setShowUserMenu(false);
-            }
-        }
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    // Initialize dialogs hook
+    const dialogs = useAdminDialogs({
+        onAuthError: () => {
+            dialogs.showSessionExpired(() => {
+                logout();
+                navigate('/admin');
+            });
+        },
+    });
 
+    // Load data
     useEffect(() => {
         loadProjects();
-        if (isAdmin) {
-            loadUsers();
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        if (isAdmin) loadUsers();
     }, [isAdmin]);
 
-    // Show password change modal if mustChangePassword is true
+    // Force password change on first login
     useEffect(() => {
-        if (user && user.mustChangePassword === true && !loading) {
-            // Small delay to ensure component is fully mounted
-            const timer = setTimeout(() => {
-                showPasswordChangeModal();
-            }, 500);
-            return () => clearTimeout(timer);
+        if (user?.mustChangePassword && !loading) {
+            setTimeout(() => handleSetupAccount(), 500);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user, loading]);
 
-    async function showPasswordChangeModal() {
-        const { value: formValues } = await Swal.fire({
-            title: 'Setup Your Account',
-            html: `
-                <p class="text-gray-600 mb-4">Please change your default credentials before continuing.</p>
-                <input id="swal-username" type="text" class="swal2-input" placeholder="New Username (min 3 chars)" value="${user?.username || ''}">
-                <input id="swal-current" type="password" class="swal2-input" placeholder="Current Password (admin)">
-                <input id="swal-new" type="password" class="swal2-input" placeholder="New Password (min 6 chars)">
-                <input id="swal-confirm" type="password" class="swal2-input" placeholder="Confirm New Password">
-            `,
-            focusConfirm: false,
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            showCancelButton: false,
-            confirmButtonColor: '#dc2626',
-            confirmButtonText: 'Save Changes',
-            preConfirm: () => {
-                const newUsername = document.getElementById('swal-username').value;
-                const current = document.getElementById('swal-current').value;
-                const newPass = document.getElementById('swal-new').value;
-                const confirm = document.getElementById('swal-confirm').value;
-
-                if (!newUsername || !current || !newPass || !confirm) {
-                    Swal.showValidationMessage('All fields are required');
-                    return false;
-                }
-                if (newUsername.length < 3) {
-                    Swal.showValidationMessage('Username must be at least 3 characters');
-                    return false;
-                }
-                if (newPass.length < 6) {
-                    Swal.showValidationMessage('Password must be at least 6 characters');
-                    return false;
-                }
-                if (newPass !== confirm) {
-                    Swal.showValidationMessage('Passwords do not match');
-                    return false;
-                }
-                return { currentPassword: current, newPassword: newPass, newUsername };
-            },
-        });
-
-        if (formValues) {
-            try {
-                Swal.fire({
-                    title: 'Updating credentials...',
-                    allowOutsideClick: false,
-                    didOpen: () => Swal.showLoading(),
-                });
-
-                const result = await changePassword(
-                    formValues.currentPassword,
-                    formValues.newPassword,
-                    formValues.newUsername
-                );
-
-                // Update auth context with new user data
-                if (result.user) {
-                    updateAuthUser(result.user);
-                }
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Account Updated!',
-                    text: `Welcome, ${result.user?.username}! Your credentials have been updated.`,
-                    confirmButtonColor: '#dc2626',
-                });
-            } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: error.message || 'Failed to update credentials',
-                    confirmButtonColor: '#dc2626',
-                }).then(() => {
-                    // Show modal again if change failed
-                    showPasswordChangeModal();
-                });
-            }
+    // ==========================================================================
+    // Data Loading
+    // ==========================================================================
+    
+    async function loadProjects() {
+        try {
+            const data = await getProjects();
+            setProjects(data);
+        } catch (error) {
+            dialogs.handleError(error, 'Failed to load projects');
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -177,693 +86,252 @@ export default function AdminDashboard() {
         }
     }
 
-    async function loadProjects() {
-        try {
-            const data = await getProjects();
-            setProjects(data);
-        } catch (error) {
-            if (error.isAuthError) {
-                handleAuthError();
-                return;
-            }
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Failed to load projects',
-                confirmButtonColor: '#dc2626',
-            });
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    function handleAuthError() {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Session Expired',
-            text: 'Your session has expired. Please login again.',
-            confirmButtonColor: '#dc2626',
-            allowOutsideClick: false,
-        }).then(() => {
-            logout();
-            navigate('/admin');
-        });
-    }
-
-    async function handleLogout() {
-        const result = await Swal.fire({
-            title: 'Logout?',
-            text: 'Are you sure you want to logout?',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#dc2626',
-            cancelButtonColor: '#6b7280',
-            confirmButtonText: 'Yes, logout',
-        });
-
-        if (result.isConfirmed) {
-            logout();
-            navigate('/admin');
-        }
-    }
+    // ==========================================================================
+    // Project Actions
+    // ==========================================================================
 
     async function handleCreateProject() {
-        const { value: formValues } = await Swal.fire({
-            title: 'Create New Project',
-            html: `
-        <input id="swal-title" class="swal2-input" placeholder="Project Title" required>
-        <input id="swal-location" class="swal2-input" placeholder="Location (e.g., Luverne, MN)">
-        <textarea id="swal-description" class="swal2-textarea" placeholder="Description (optional)"></textarea>
-      `,
-            focusConfirm: false,
-            showCancelButton: true,
-            confirmButtonColor: '#dc2626',
-            confirmButtonText: 'Create',
-            preConfirm: () => {
-                const title = document.getElementById('swal-title').value;
-                if (!title) {
-                    Swal.showValidationMessage('Title is required');
-                    return false;
-                }
-                return {
-                    title,
-                    location: document.getElementById('swal-location').value,
-                    description: document.getElementById('swal-description').value,
-                };
-            },
-        });
+        const formData = await dialogs.projectDialog();
+        if (!formData) return;
 
-        if (formValues) {
-            try {
-                Swal.fire({
-                    title: 'Creating...',
-                    allowOutsideClick: false,
-                    didOpen: () => Swal.showLoading(),
-                });
-
-                const data = await createProject(formValues);
-                setProjects([...projects, data.project]);
-
-                // Auto-expand the new project so user can add photos
-                setExpandedProject(data.project.id);
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Project Created!',
-                    html: '<p>Now add photos to your project below.</p><p class="text-sm text-gray-500 mt-2">Upload Before, After, and Gallery photos.</p>',
-                    confirmButtonColor: '#dc2626',
-                    confirmButtonText: 'Got it!',
-                });
-            } catch (error) {
-                if (error.isAuthError) {
-                    handleAuthError();
-                    return;
-                }
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: error.message || 'Failed to create project',
-                    confirmButtonColor: '#dc2626',
-                });
-            }
+        try {
+            dialogs.showLoading('Creating...');
+            const data = await createProject(formData);
+            setProjects([...projects, data.project]);
+            setExpandedProject(data.project.id);
+            dialogs.showSuccess('Project Created!', 'Now add photos to your project below.', 0);
+        } catch (error) {
+            dialogs.handleError(error, 'Failed to create project');
         }
     }
 
     async function handleEditProject(project) {
-        const { value: formValues } = await Swal.fire({
-            title: 'Edit Project',
-            html: `
-        <input id="swal-title" class="swal2-input" placeholder="Project Title" value="${project.title}" required>
-        <input id="swal-location" class="swal2-input" placeholder="Location" value="${project.location || ''}">
-        <textarea id="swal-description" class="swal2-textarea" placeholder="Description">${project.description || ''}</textarea>
-      `,
-            focusConfirm: false,
-            showCancelButton: true,
-            confirmButtonColor: '#dc2626',
-            confirmButtonText: 'Save',
-            preConfirm: () => {
-                const title = document.getElementById('swal-title').value;
-                if (!title) {
-                    Swal.showValidationMessage('Title is required');
-                    return false;
-                }
-                return {
-                    title,
-                    location: document.getElementById('swal-location').value,
-                    description: document.getElementById('swal-description').value,
-                };
-            },
-        });
+        const formData = await dialogs.projectDialog(project);
+        if (!formData) return;
 
-        if (formValues) {
-            try {
-                Swal.fire({
-                    title: 'Saving...',
-                    allowOutsideClick: false,
-                    didOpen: () => Swal.showLoading(),
-                });
-
-                await updateProject(project.id, formValues);
-                setProjects(projects.map(p =>
-                    p.id === project.id ? { ...p, ...formValues } : p
-                ));
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Saved!',
-                    timer: 1500,
-                    showConfirmButton: false,
-                });
-            } catch (error) {
-                if (error.isAuthError) {
-                    handleAuthError();
-                    return;
-                }
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: error.message,
-                    confirmButtonColor: '#dc2626',
-                });
-            }
+        try {
+            dialogs.showLoading('Saving...');
+            await updateProject(project.id, formData);
+            setProjects(projects.map(p => p.id === project.id ? { ...p, ...formData } : p));
+            dialogs.showSuccess('Saved!');
+        } catch (error) {
+            dialogs.handleError(error, 'Failed to save project');
         }
     }
 
     async function handleDeleteProject(project) {
-        const result = await Swal.fire({
-            title: 'Delete Project?',
-            html: `
-        <p>Are you sure you want to delete "<strong>${project.title}</strong>"?</p>
-        <p class="text-sm text-gray-500 mt-2">This will also delete all photos in this project.</p>
-      `,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc2626',
-            confirmButtonText: 'Yes, delete it',
-        });
+        const confirmed = await dialogs.deleteProjectDialog(project.title);
+        if (!confirmed) return;
 
-        if (result.isConfirmed) {
-            try {
-                Swal.fire({
-                    title: 'Deleting...',
-                    allowOutsideClick: false,
-                    didOpen: () => Swal.showLoading(),
-                });
-
-                await deleteProject(project.id);
-                setProjects(projects.filter(p => p.id !== project.id));
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Deleted!',
-                    timer: 1500,
-                    showConfirmButton: false,
-                });
-            } catch (error) {
-                if (error.isAuthError) {
-                    handleAuthError();
-                    return;
-                }
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: error.message,
-                    confirmButtonColor: '#dc2626',
-                });
-            }
+        try {
+            dialogs.showLoading('Deleting...');
+            await deleteProject(project.id);
+            setProjects(projects.filter(p => p.id !== project.id));
+            dialogs.showSuccess('Deleted!');
+        } catch (error) {
+            dialogs.handleError(error, 'Failed to delete project');
         }
     }
 
-    function openFileUpload(projectId, type = 'gallery') {
-        setUploadingTo(projectId);
-        setUploadType(type);
+    // ==========================================================================
+    // Photo Actions
+    // ==========================================================================
+
+    function openFileUpload(projectId, type) {
+        setUploadTarget({ projectId, type });
         fileInputRef.current?.click();
     }
 
     async function handleFileUpload(e) {
         const files = e.target.files;
-        if (!files?.length || !uploadingTo) {
-            console.log('handleFileUpload: No files or no uploadingTo', { files: files?.length, uploadingTo });
-            return;
-        }
+        if (!files?.length || !uploadTarget) return;
 
-        // IMPORTANT: Copy files array BEFORE resetting input (resetting clears FileList)
         const filesArray = Array.from(files);
+        const { projectId, type } = uploadTarget;
 
-        const projectId = uploadingTo;
-        const type = uploadType;
-
-        console.log('handleFileUpload: Starting upload', {
-            projectId,
-            type,
-            filesCount: filesArray.length,
-            fileNames: filesArray.map(f => f.name)
-        });
-
-        // Reset input (this clears the FileList, but we already copied it)
         e.target.value = '';
-        setUploadingTo(null);
+        setUploadTarget(null);
 
-        // Show upload progress
-        Swal.fire({
-            title: 'Uploading...',
-            html: `<p>Uploading ${filesArray.length} photo(s) to Cloudinary...</p>`,
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading(),
-        });
+        dialogs.showLoading(`Uploading ${filesArray.length} photo(s)...`);
 
         const successfulUploads = [];
         const failedUploads = [];
 
-        try {
-            // Upload files one by one to better track errors
-            for (const file of filesArray) {
-                try {
-                    console.log('Uploading file:', file.name, 'size:', file.size, 'type:', file.type);
-                    const result = await uploadPhoto(projectId, file, type);
-                    console.log('Upload success:', result);
-                    successfulUploads.push(result);
-                } catch (fileError) {
-                    console.error('Upload failed for file:', file.name, fileError);
-                    failedUploads.push({ file: file.name, error: fileError.message });
-                }
+        for (const file of filesArray) {
+            try {
+                const result = await uploadPhoto(projectId, file, type);
+                successfulUploads.push(result);
+            } catch (error) {
+                failedUploads.push({ file: file.name, error: error.message });
             }
+        }
 
-            console.log('Upload summary:', {
-                successful: successfulUploads.length,
-                failed: failedUploads.length
-            });
-
-            // Update project with successful uploads
-            if (successfulUploads.length > 0) {
-                setProjects(projects.map(p => {
-                    if (p.id !== projectId) return p;
-
-                    const updatedProject = { ...p };
-                    successfulUploads.forEach(result => {
-                        if (result.photo.type === 'before') {
-                            updatedProject.beforePhoto = result.photo;
-                        } else if (result.photo.type === 'after') {
-                            updatedProject.afterPhoto = result.photo;
-                        } else {
-                            updatedProject.photos = [...(updatedProject.photos || []), result.photo];
-                        }
-                    });
-                    return updatedProject;
-                }));
-            }
-
-            // Show result
-            if (failedUploads.length > 0) {
-                const errorDetails = failedUploads.map(f => `${f.file}: ${f.error}`).join('\n');
-                Swal.fire({
-                    icon: failedUploads.length === filesArray.length ? 'error' : 'warning',
-                    title: failedUploads.length === filesArray.length ? 'Upload Failed' : 'Partial Upload',
-                    html: `
-                        <p>${successfulUploads.length} photo(s) uploaded successfully</p>
-                        <p style="color: red;">${failedUploads.length} photo(s) failed:</p>
-                        <pre style="text-align: left; font-size: 12px; max-height: 200px; overflow: auto;">${errorDetails}</pre>
-                    `,
-                    confirmButtonColor: '#dc2626',
+        // Update state with successful uploads
+        if (successfulUploads.length > 0) {
+            setProjects(projects.map(p => {
+                if (p.id !== projectId) return p;
+                const updated = { ...p };
+                successfulUploads.forEach(({ photo }) => {
+                    if (photo.type === 'before') updated.beforePhoto = photo;
+                    else if (photo.type === 'after') updated.afterPhoto = photo;
+                    else updated.photos = [...(updated.photos || []), photo];
                 });
-            } else {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Uploaded!',
-                    text: `${successfulUploads.length} photo(s) uploaded successfully`,
-                    timer: 2000,
-                    showConfirmButton: false,
-                });
-            }
-        } catch (error) {
-            console.error('handleFileUpload error:', error);
-            if (error.isAuthError) {
-                handleAuthError();
-                return;
-            }
-            Swal.fire({
-                icon: 'error',
-                title: 'Upload Failed',
-                html: `<p>${error.message}</p><pre style="font-size: 10px;">${error.stack || ''}</pre>`,
-                confirmButtonColor: '#dc2626',
-            });
+                return updated;
+            }));
+        }
+
+        // Show result
+        if (failedUploads.length > 0) {
+            const details = failedUploads.map(f => `${f.file}: ${f.error}`).join('\n');
+            dialogs.showError(
+                failedUploads.length === filesArray.length ? 'Upload Failed' : 'Partial Upload',
+                `${successfulUploads.length} uploaded, ${failedUploads.length} failed\n${details}`
+            );
+        } else {
+            dialogs.showSuccess('Uploaded!', `${successfulUploads.length} photo(s) uploaded`);
         }
     }
 
     async function handleDeletePhoto(projectId, photo) {
-        const result = await Swal.fire({
-            title: 'Delete Photo?',
-            imageUrl: photo.url,
-            imageWidth: 200,
-            imageAlt: 'Photo to delete',
-            showCancelButton: true,
-            confirmButtonColor: '#dc2626',
-            confirmButtonText: 'Delete',
-        });
+        const confirmed = await dialogs.deletePhotoDialog(photo.url);
+        if (!confirmed) return;
 
-        if (result.isConfirmed) {
-            try {
-                Swal.fire({
-                    title: 'Deleting...',
-                    allowOutsideClick: false,
-                    didOpen: () => Swal.showLoading(),
-                });
+        try {
+            dialogs.showLoading('Deleting...');
+            await deletePhoto(projectId, photo.id);
 
-                await deletePhoto(projectId, photo.id);
+            setProjects(projects.map(p => {
+                if (p.id !== projectId) return p;
+                const updated = { ...p };
+                if (p.beforePhoto?.id === photo.id) updated.beforePhoto = null;
+                else if (p.afterPhoto?.id === photo.id) updated.afterPhoto = null;
+                else updated.photos = (p.photos || []).filter(ph => ph.id !== photo.id);
+                return updated;
+            }));
 
-                // Update project state
-                setProjects(projects.map(p => {
-                    if (p.id !== projectId) return p;
-
-                    const updatedProject = { ...p };
-                    if (p.beforePhoto?.id === photo.id) {
-                        updatedProject.beforePhoto = null;
-                    } else if (p.afterPhoto?.id === photo.id) {
-                        updatedProject.afterPhoto = null;
-                    } else {
-                        updatedProject.photos = (p.photos || []).filter(ph => ph.id !== photo.id);
-                    }
-                    return updatedProject;
-                }));
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Deleted!',
-                    timer: 1500,
-                    showConfirmButton: false,
-                });
-            } catch (error) {
-                if (error.isAuthError) {
-                    handleAuthError();
-                    return;
-                }
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: error.message,
-                    confirmButtonColor: '#dc2626',
-                });
-            }
+            dialogs.showSuccess('Deleted!');
+        } catch (error) {
+            dialogs.handleError(error, 'Failed to delete photo');
         }
     }
 
-    // ==========================================================================
-    // Photo Reorder Functions
-    // ==========================================================================
-
     async function handleReorderPhoto(projectId, photoIndex, direction) {
         const project = projects.find(p => p.id === projectId);
-        if (!project || !project.photos || project.photos.length < 2) return;
+        if (!project?.photos || project.photos.length < 2) return;
 
         const newIndex = direction === 'left' ? photoIndex - 1 : photoIndex + 1;
         if (newIndex < 0 || newIndex >= project.photos.length) return;
 
-        // Create new photos array with swapped positions
         const newPhotos = [...project.photos];
         [newPhotos[photoIndex], newPhotos[newIndex]] = [newPhotos[newIndex], newPhotos[photoIndex]];
 
-        // Update state immediately for responsiveness
-        setProjects(projects.map(p => 
-            p.id === projectId ? { ...p, photos: newPhotos } : p
-        ));
+        // Optimistic update
+        setProjects(projects.map(p => p.id === projectId ? { ...p, photos: newPhotos } : p));
 
-        // Save to backend
         try {
             await updateProject(projectId, { photos: newPhotos });
         } catch (error) {
             // Revert on error
-            setProjects(projects.map(p => 
-                p.id === projectId ? { ...p, photos: project.photos } : p
-            ));
-            if (error.isAuthError) {
-                handleAuthError();
-                return;
-            }
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Failed to save photo order',
-                confirmButtonColor: '#dc2626',
-            });
+            setProjects(projects.map(p => p.id === projectId ? { ...p, photos: project.photos } : p));
+            dialogs.handleError(error, 'Failed to save photo order');
         }
     }
 
     // ==========================================================================
-    // User Management Functions (Admin only)
+    // User Actions
     // ==========================================================================
 
     async function handleCreateUser() {
-        const { value: formValues } = await Swal.fire({
-            title: 'Create New User',
-            html: `
-                <input id="swal-username" class="swal2-input" placeholder="Username" required>
-                <input id="swal-password" type="password" class="swal2-input" placeholder="Password (min 6 chars)">
-                <select id="swal-role" class="swal2-select">
-                    <option value="user">User (Photos only)</option>
-                    <option value="admin">Admin (Full access)</option>
-                </select>
-            `,
-            focusConfirm: false,
-            showCancelButton: true,
-            confirmButtonColor: '#dc2626',
-            confirmButtonText: 'Create',
-            preConfirm: () => {
-                const username = document.getElementById('swal-username').value;
-                const password = document.getElementById('swal-password').value;
-                const role = document.getElementById('swal-role').value;
+        const formData = await dialogs.userDialog();
+        if (!formData) return;
 
-                if (!username || !password) {
-                    Swal.showValidationMessage('Username and password are required');
-                    return false;
-                }
-                if (password.length < 6) {
-                    Swal.showValidationMessage('Password must be at least 6 characters');
-                    return false;
-                }
-                return { username, password, role };
-            },
-        });
-
-        if (formValues) {
-            try {
-                Swal.fire({
-                    title: 'Creating...',
-                    allowOutsideClick: false,
-                    didOpen: () => Swal.showLoading(),
-                });
-
-                const data = await createUser(formValues);
-                setUsers([...users, data.user]);
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Created!',
-                    text: 'User created successfully',
-                    timer: 1500,
-                    showConfirmButton: false,
-                });
-            } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: error.message || 'Failed to create user',
-                    confirmButtonColor: '#dc2626',
-                });
-            }
+        try {
+            dialogs.showLoading('Creating...');
+            const data = await createUser(formData);
+            setUsers([...users, data.user]);
+            dialogs.showSuccess('User Created!');
+        } catch (error) {
+            dialogs.handleError(error, 'Failed to create user');
         }
     }
 
     async function handleEditUser(targetUser) {
-        const { value: formValues } = await Swal.fire({
-            title: 'Edit User',
-            html: `
-                <input id="swal-username" class="swal2-input" placeholder="Username" value="${targetUser.username}">
-                <input id="swal-password" type="password" class="swal2-input" placeholder="New Password (leave empty to keep)">
-                <select id="swal-role" class="swal2-select">
-                    <option value="user" ${targetUser.role === 'user' ? 'selected' : ''}>User (Photos only)</option>
-                    <option value="admin" ${targetUser.role === 'admin' ? 'selected' : ''}>Admin (Full access)</option>
-                </select>
-            `,
-            focusConfirm: false,
-            showCancelButton: true,
-            confirmButtonColor: '#dc2626',
-            confirmButtonText: 'Save',
-            preConfirm: () => {
-                const username = document.getElementById('swal-username').value;
-                const password = document.getElementById('swal-password').value;
-                const role = document.getElementById('swal-role').value;
+        const formData = await dialogs.userDialog(targetUser);
+        if (!formData) return;
 
-                if (!username) {
-                    Swal.showValidationMessage('Username is required');
-                    return false;
-                }
-                if (password && password.length < 6) {
-                    Swal.showValidationMessage('Password must be at least 6 characters');
-                    return false;
-                }
-
-                const updates = { username, role };
-                if (password) updates.password = password;
-                return updates;
-            },
-        });
-
-        if (formValues) {
-            try {
-                Swal.fire({
-                    title: 'Saving...',
-                    allowOutsideClick: false,
-                    didOpen: () => Swal.showLoading(),
-                });
-
-                await updateUser(targetUser.id, formValues);
-                setUsers(users.map(u =>
-                    u.id === targetUser.id ? { ...u, ...formValues } : u
-                ));
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Saved!',
-                    timer: 1500,
-                    showConfirmButton: false,
-                });
-            } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: error.message,
-                    confirmButtonColor: '#dc2626',
-                });
-            }
+        try {
+            dialogs.showLoading('Saving...');
+            await updateUser(targetUser.id, formData);
+            setUsers(users.map(u => u.id === targetUser.id ? { ...u, ...formData } : u));
+            dialogs.showSuccess('Saved!');
+        } catch (error) {
+            dialogs.handleError(error, 'Failed to save user');
         }
     }
 
     async function handleDeleteUser(targetUser) {
         if (targetUser.id === user?.id) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Cannot Delete',
-                text: 'You cannot delete your own account',
-                confirmButtonColor: '#dc2626',
-            });
+            dialogs.showError('Cannot Delete', 'You cannot delete your own account');
             return;
         }
 
-        const result = await Swal.fire({
-            title: 'Delete User?',
-            html: `<p>Are you sure you want to delete "<strong>${targetUser.username}</strong>"?</p>`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc2626',
-            confirmButtonText: 'Yes, delete',
-        });
+        const confirmed = await dialogs.deleteUserDialog(targetUser.username);
+        if (!confirmed) return;
 
-        if (result.isConfirmed) {
-            try {
-                Swal.fire({
-                    title: 'Deleting...',
-                    allowOutsideClick: false,
-                    didOpen: () => Swal.showLoading(),
-                });
-
-                await deleteUser(targetUser.id);
-                setUsers(users.filter(u => u.id !== targetUser.id));
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Deleted!',
-                    timer: 1500,
-                    showConfirmButton: false,
-                });
-            } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: error.message,
-                    confirmButtonColor: '#dc2626',
-                });
-            }
+        try {
+            dialogs.showLoading('Deleting...');
+            await deleteUser(targetUser.id);
+            setUsers(users.filter(u => u.id !== targetUser.id));
+            dialogs.showSuccess('Deleted!');
+        } catch (error) {
+            dialogs.handleError(error, 'Failed to delete user');
         }
     }
 
-    async function handleManualPasswordChange() {
-        const { value: formValues } = await Swal.fire({
-            title: 'Change Credentials',
-            html: `
-                <input id="swal-username" type="text" class="swal2-input" placeholder="New Username (optional)" value="${user?.username || ''}">
-                <input id="swal-current" type="password" class="swal2-input" placeholder="Current Password">
-                <input id="swal-new" type="password" class="swal2-input" placeholder="New Password (min 6 chars)">
-                <input id="swal-confirm" type="password" class="swal2-input" placeholder="Confirm New Password">
-            `,
-            focusConfirm: false,
-            showCancelButton: true,
-            confirmButtonColor: '#dc2626',
-            confirmButtonText: 'Save Changes',
-            preConfirm: () => {
-                const newUsername = document.getElementById('swal-username').value;
-                const current = document.getElementById('swal-current').value;
-                const newPass = document.getElementById('swal-new').value;
-                const confirm = document.getElementById('swal-confirm').value;
+    // ==========================================================================
+    // Credentials Actions
+    // ==========================================================================
 
-                if (!current || !newPass || !confirm) {
-                    Swal.showValidationMessage('Password fields are required');
-                    return false;
-                }
-                if (newUsername && newUsername.length < 3) {
-                    Swal.showValidationMessage('Username must be at least 3 characters');
-                    return false;
-                }
-                if (newPass.length < 6) {
-                    Swal.showValidationMessage('Password must be at least 6 characters');
-                    return false;
-                }
-                if (newPass !== confirm) {
-                    Swal.showValidationMessage('Passwords do not match');
-                    return false;
-                }
-                return {
-                    currentPassword: current,
-                    newPassword: newPass,
-                    newUsername: newUsername !== user?.username ? newUsername : null
-                };
-            },
-        });
+    async function handleSetupAccount() {
+        const formData = await dialogs.setupAccountDialog(user?.username);
+        if (!formData) return handleSetupAccount(); // Loop until successful
 
-        if (formValues) {
-            try {
-                Swal.fire({
-                    title: 'Updating credentials...',
-                    allowOutsideClick: false,
-                    didOpen: () => Swal.showLoading(),
-                });
-
-                const result = await changePassword(
-                    formValues.currentPassword,
-                    formValues.newPassword,
-                    formValues.newUsername
-                );
-
-                // Update auth context with new user data
-                if (result.user) {
-                    updateAuthUser(result.user);
-                }
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Credentials Updated!',
-                    text: 'Your credentials have been updated successfully.',
-                    confirmButtonColor: '#dc2626',
-                });
-            } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: error.message || 'Failed to update credentials',
-                    confirmButtonColor: '#dc2626',
-                });
-            }
+        try {
+            dialogs.showLoading('Updating credentials...');
+            const result = await changePassword(formData.currentPassword, formData.newPassword, formData.newUsername);
+            if (result.user) updateAuthUser(result.user);
+            dialogs.showSuccess('Account Updated!', `Welcome, ${result.user?.username}!`, 0);
+        } catch (error) {
+            dialogs.showError('Error', error.message);
+            handleSetupAccount(); // Retry
         }
     }
+
+    async function handleChangeCredentials() {
+        const formData = await dialogs.credentialsDialog(user?.username);
+        if (!formData) return;
+
+        try {
+            dialogs.showLoading('Updating credentials...');
+            const result = await changePassword(formData.currentPassword, formData.newPassword, formData.newUsername);
+            if (result.user) updateAuthUser(result.user);
+            dialogs.showSuccess('Credentials Updated!');
+        } catch (error) {
+            dialogs.handleError(error, 'Failed to update credentials');
+        }
+    }
+
+    async function handleLogout() {
+        const confirmed = await dialogs.logoutDialog();
+        if (confirmed) {
+            logout();
+            navigate('/admin');
+        }
+    }
+
+    // ==========================================================================
+    // Render
+    // ==========================================================================
 
     if (loading) {
         return (
@@ -885,414 +353,129 @@ export default function AdminDashboard() {
                 className="hidden"
             />
 
-            {/* Header */}
-            <header className="bg-gray-800 border-b border-gray-700 sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                        <h1 className="text-xl font-bold text-white">Padillas Concrete Admin</h1>
-                    </div>
+            <AdminHeader
+                user={user}
+                isAdmin={isAdmin}
+                onLogout={handleLogout}
+                onChangeCredentials={handleChangeCredentials}
+                onCreateUser={handleCreateUser}
+            />
 
-                    <div className="flex items-center space-x-4">
-                        <button
-                            onClick={() => navigate('/')}
-                            className="flex items-center text-gray-400 hover:text-white transition-colors"
-                        >
-                            <Home className="w-5 h-5 mr-1" />
-                            View Site
-                        </button>
-
-                        {/* User Dropdown */}
-                        <div className="relative" ref={userMenuRef}>
-                            <button
-                                onClick={() => setShowUserMenu(!showUserMenu)}
-                                className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition-colors"
-                            >
-                                <Settings className="w-5 h-5" />
-                                <span>{user?.username}</span>
-                                <span className="px-2 py-0.5 bg-gray-600 rounded text-xs">
-                                    {isAdmin ? 'Admin' : 'User'}
-                                </span>
-                                <ChevronDown className={`w-4 h-4 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
-                            </button>
-
-                            {/* Dropdown Menu */}
-                            {showUserMenu && (
-                                <div className="absolute right-0 mt-2 w-56 bg-gray-800 rounded-lg shadow-lg border border-gray-700 py-2 z-50">
-                                    <button
-                                        onClick={() => { setShowUserMenu(false); handleManualPasswordChange(); }}
-                                        className="w-full flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
-                                    >
-                                        <Key className="w-4 h-4 mr-3" />
-                                        Change Credentials
-                                    </button>
-
-                                    {isAdmin && (
-                                        <button
-                                            onClick={() => { setShowUserMenu(false); handleCreateUser(); }}
-                                            className="w-full flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
-                                        >
-                                            <UserPlus className="w-4 h-4 mr-3" />
-                                            Create User
-                                        </button>
-                                    )}
-
-                                    <div className="border-t border-gray-700 my-2"></div>
-
-                                    <button
-                                        onClick={() => { setShowUserMenu(false); handleLogout(); }}
-                                        className="w-full flex items-center px-4 py-2 text-red-400 hover:bg-gray-700 hover:text-red-300 transition-colors"
-                                    >
-                                        <LogOut className="w-4 h-4 mr-3" />
-                                        Logout
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            {/* Main Content */}
             <main className="max-w-7xl mx-auto px-4 py-8">
-                {/* Tabs (Admin only sees both tabs) */}
+                {/* Tabs (Admin only) */}
                 {isAdmin && (
                     <div className="flex space-x-4 mb-6 border-b border-gray-700">
-                        <button
+                        <TabButton
+                            active={activeTab === 'projects'}
                             onClick={() => setActiveTab('projects')}
-                            className={`pb-3 px-2 font-medium transition-colors ${activeTab === 'projects'
-                                ? 'text-red-500 border-b-2 border-red-500'
-                                : 'text-gray-400 hover:text-white'
-                                }`}
-                        >
-                            <Image className="w-5 h-5 inline mr-2" />
-                            Gallery Projects
-                        </button>
-                        <button
+                            icon={<Image className="w-5 h-5 inline mr-2" />}
+                            label="Gallery Projects"
+                        />
+                        <TabButton
+                            active={activeTab === 'users'}
                             onClick={() => setActiveTab('users')}
-                            className={`pb-3 px-2 font-medium transition-colors ${activeTab === 'users'
-                                ? 'text-red-500 border-b-2 border-red-500'
-                                : 'text-gray-400 hover:text-white'
-                                }`}
-                        >
-                            <Users className="w-5 h-5 inline mr-2" />
-                            User Management
-                        </button>
+                            icon={<Users className="w-5 h-5 inline mr-2" />}
+                            label="User Management"
+                        />
                     </div>
                 )}
 
-                {/* Users Tab Content (Admin only) */}
+                {/* Users Tab */}
                 {isAdmin && activeTab === 'users' && (
                     <div>
-                        <div className="flex items-center justify-between mb-8">
-                            <h2 className="text-2xl font-bold text-white">User Management</h2>
-                            <button
-                                onClick={handleCreateUser}
-                                className="flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-                            >
-                                <Plus className="w-5 h-5 mr-2" />
-                                New User
-                            </button>
-                        </div>
-
-                        {users.length === 0 ? (
-                            <div className="text-center py-16">
-                                <Users className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                                <p className="text-gray-400 text-lg">No users yet</p>
-                            </div>
-                        ) : (
-                            <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
-                                <table className="w-full">
-                                    <thead className="bg-gray-750">
-                                        <tr className="border-b border-gray-700">
-                                            <th className="text-left text-gray-400 font-medium px-4 py-3">Username</th>
-                                            <th className="text-left text-gray-400 font-medium px-4 py-3">Role</th>
-                                            <th className="text-left text-gray-400 font-medium px-4 py-3">Created</th>
-                                            <th className="text-right text-gray-400 font-medium px-4 py-3">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {users.map(u => (
-                                            <tr key={u.id} className="border-b border-gray-700 last:border-0">
-                                                <td className="px-4 py-3 text-white">
-                                                    {u.username}
-                                                    {u.id === user?.id && (
-                                                        <span className="ml-2 text-xs text-gray-500">(you)</span>
-                                                    )}
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <span className={`px-2 py-1 rounded text-xs ${u.role === 'admin'
-                                                        ? 'bg-red-600/20 text-red-400'
-                                                        : 'bg-blue-600/20 text-blue-400'
-                                                        }`}>
-                                                        {u.role === 'admin' ? 'Admin' : 'User'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-4 py-3 text-gray-400 text-sm">
-                                                    {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A'}
-                                                </td>
-                                                <td className="px-4 py-3 text-right">
-                                                    <button
-                                                        onClick={() => handleEditUser(u)}
-                                                        className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
-                                                    >
-                                                        <Edit className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteUser(u)}
-                                                        disabled={u.id === user?.id}
-                                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
+                        <SectionHeader title="User Management" onAdd={handleCreateUser} addLabel="New User" />
+                        <UsersTable
+                            users={users}
+                            currentUserId={user?.id}
+                            onEdit={handleEditUser}
+                            onDelete={handleDeleteUser}
+                        />
                     </div>
                 )}
 
-                {/* Projects Tab Content */}
+                {/* Projects Tab */}
                 {(activeTab === 'projects' || !isAdmin) && (
-                    <>
-                        {/* Actions Bar */}
-                        <div className="flex items-center justify-between mb-8">
-                            <h2 className="text-2xl font-bold text-white">Gallery Projects</h2>
-                            {isAdmin && (
-                                <button
-                                    onClick={handleCreateProject}
-                                    className="flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-                                >
-                                    <Plus className="w-5 h-5 mr-2" />
-                                    New Project
-                                </button>
-                            )}
-                        </div>
+                    <div>
+                        <SectionHeader
+                            title="Gallery Projects"
+                            onAdd={isAdmin ? handleCreateProject : null}
+                            addLabel="New Project"
+                        />
 
-                        {/* Projects List */}
                         {projects.length === 0 ? (
-                            <div className="text-center py-16">
-                                <Image className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                                <p className="text-gray-400 text-lg">No projects yet</p>
-                                <p className="text-gray-500 mt-2">Create your first project to start adding photos</p>
-                            </div>
+                            <EmptyState
+                                icon={<Image className="w-16 h-16 text-gray-600" />}
+                                title="No projects yet"
+                                subtitle="Create your first project to start adding photos"
+                            />
                         ) : (
                             <div className="space-y-4">
                                 {projects.map(project => (
-                                    <div
+                                    <ProjectCard
                                         key={project.id}
-                                        className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden"
-                                    >
-                                        {/* Project Header */}
-                                        <div
-                                            className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-750"
-                                            onClick={() => setExpandedProject(
-                                                expandedProject === project.id ? null : project.id
-                                            )}
-                                        >
-                                            <div className="flex items-center space-x-4">
-                                                <div className="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
-                                                    {project.beforePhoto || project.afterPhoto || project.photos?.[0] ? (
-                                                        <img
-                                                            src={(project.beforePhoto || project.afterPhoto || project.photos[0]).url}
-                                                            alt={project.title}
-                                                            className="w-full h-full object-cover"
-                                                        />
-                                                    ) : (
-                                                        <Image className="w-6 h-6 text-gray-500" />
-                                                    )}
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-white font-semibold">{project.title}</h3>
-                                                    <p className="text-gray-400 text-sm">
-                                                        {project.location || 'No location'} • {(project.photos?.length || 0) + (project.beforePhoto ? 1 : 0) + (project.afterPhoto ? 1 : 0)} photos
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-center space-x-2">
-                                                {/* Add Photos hint when no photos */}
-                                                {!project.beforePhoto && !project.afterPhoto && (!project.photos || project.photos.length === 0) && (
-                                                    <span className="text-amber-500 text-sm mr-2 animate-pulse">
-                                                        Click to add photos →
-                                                    </span>
-                                                )}
-                                                {isAdmin && (
-                                                    <>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); handleEditProject(project); }}
-                                                            className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
-                                                        >
-                                                            <Edit className="w-5 h-5" />
-                                                        </button>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); handleDeleteProject(project); }}
-                                                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-700 rounded-lg transition-colors"
-                                                        >
-                                                            <Trash2 className="w-5 h-5" />
-                                                        </button>
-                                                    </>
-                                                )}
-                                                {expandedProject === project.id ? (
-                                                    <ChevronUp className="w-5 h-5 text-gray-400" />
-                                                ) : (
-                                                    <ChevronDown className="w-5 h-5 text-gray-400" />
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* Expanded Content */}
-                                        {expandedProject === project.id && (
-                                            <div className="border-t border-gray-700 p-4">
-                                                {/* Before/After Section */}
-                                                <div className="mb-6">
-                                                    <h4 className="text-white font-medium mb-3">Before & After</h4>
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        {/* Before Photo */}
-                                                        <div className="relative">
-                                                            <p className="text-gray-400 text-sm mb-2">Before</p>
-                                                            {project.beforePhoto ? (
-                                                                <div className="relative group">
-                                                                    <img
-                                                                        src={project.beforePhoto.url}
-                                                                        alt="Before"
-                                                                        className="w-full h-32 object-cover rounded-lg"
-                                                                    />
-                                                                    <button
-                                                                        onClick={() => handleDeletePhoto(project.id, project.beforePhoto)}
-                                                                        className="absolute top-2 right-2 p-1 bg-red-600 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                    >
-                                                                        <X className="w-4 h-4" />
-                                                                    </button>
-                                                                </div>
-                                                            ) : (
-                                                                <button
-                                                                    onClick={() => openFileUpload(project.id, 'before')}
-                                                                    className="w-full h-32 border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center text-gray-500 hover:text-white hover:border-gray-400 transition-colors"
-                                                                >
-                                                                    <Upload className="w-6 h-6 mb-1" />
-                                                                    <span className="text-sm">Upload Before</span>
-                                                                </button>
-                                                            )}
-                                                        </div>
-
-                                                        {/* After Photo */}
-                                                        <div className="relative">
-                                                            <p className="text-gray-400 text-sm mb-2">After</p>
-                                                            {project.afterPhoto ? (
-                                                                <div className="relative group">
-                                                                    <img
-                                                                        src={project.afterPhoto.url}
-                                                                        alt="After"
-                                                                        className="w-full h-32 object-cover rounded-lg"
-                                                                    />
-                                                                    <button
-                                                                        onClick={() => handleDeletePhoto(project.id, project.afterPhoto)}
-                                                                        className="absolute top-2 right-2 p-1 bg-red-600 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                    >
-                                                                        <X className="w-4 h-4" />
-                                                                    </button>
-                                                                </div>
-                                                            ) : (
-                                                                <button
-                                                                    onClick={() => openFileUpload(project.id, 'after')}
-                                                                    className="w-full h-32 border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center text-gray-500 hover:text-white hover:border-gray-400 transition-colors"
-                                                                >
-                                                                    <Upload className="w-6 h-6 mb-1" />
-                                                                    <span className="text-sm">Upload After</span>
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Gallery Photos Section */}
-                                                <div>
-                                                    <div className="flex items-center justify-between mb-3">
-                                                        <h4 className="text-white font-medium">Gallery Photos</h4>
-                                                        <button
-                                                            onClick={() => openFileUpload(project.id, 'gallery')}
-                                                            className="flex items-center text-sm text-red-500 hover:text-red-400 transition-colors"
-                                                        >
-                                                            <Plus className="w-4 h-4 mr-1" />
-                                                            Add Photos
-                                                        </button>
-                                                    </div>
-
-                                                    {project.photos?.length > 0 ? (
-                                                        <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
-                                                            {project.photos.map((photo, index) => (
-                                                                <div key={photo.id} className="relative group">
-                                                                    {/* Order badge */}
-                                                                    <div className="absolute top-1 left-1 z-10 bg-black/70 text-white text-xs px-2 py-0.5 rounded-full font-medium">
-                                                                        {index + 1}
-                                                                    </div>
-                                                                    
-                                                                    <img
-                                                                        src={photo.url}
-                                                                        alt={`Gallery ${index + 1}`}
-                                                                        className="w-full h-24 object-cover rounded-lg border-2 border-transparent group-hover:border-red-500 transition-all"
-                                                                    />
-                                                                    
-                                                                    {/* Reorder & Delete buttons */}
-                                                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-1">
-                                                                        {/* Move Left */}
-                                                                        <button
-                                                                            onClick={() => handleReorderPhoto(project.id, index, 'left')}
-                                                                            disabled={index === 0}
-                                                                            className={`p-1.5 rounded-full transition-colors ${
-                                                                                index === 0 
-                                                                                    ? 'bg-gray-600/50 text-gray-400 cursor-not-allowed' 
-                                                                                    : 'bg-blue-600 text-white hover:bg-blue-500'
-                                                                            }`}
-                                                                            title="Move left"
-                                                                        >
-                                                                            <ChevronLeft className="w-4 h-4" />
-                                                                        </button>
-                                                                        
-                                                                        {/* Delete */}
-                                                                        <button
-                                                                            onClick={() => handleDeletePhoto(project.id, photo)}
-                                                                            className="p-1.5 bg-red-600 text-white rounded-full hover:bg-red-500 transition-colors"
-                                                                            title="Delete"
-                                                                        >
-                                                                            <X className="w-4 h-4" />
-                                                                        </button>
-                                                                        
-                                                                        {/* Move Right */}
-                                                                        <button
-                                                                            onClick={() => handleReorderPhoto(project.id, index, 'right')}
-                                                                            disabled={index === project.photos.length - 1}
-                                                                            className={`p-1.5 rounded-full transition-colors ${
-                                                                                index === project.photos.length - 1 
-                                                                                    ? 'bg-gray-600/50 text-gray-400 cursor-not-allowed' 
-                                                                                    : 'bg-blue-600 text-white hover:bg-blue-500'
-                                                                            }`}
-                                                                            title="Move right"
-                                                                        >
-                                                                            <ChevronRight className="w-4 h-4" />
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    ) : (
-                                                        <p className="text-gray-500 text-sm text-center py-4">
-                                                            No gallery photos yet. Click "Add Photos" to upload.
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
+                                        project={project}
+                                        isExpanded={expandedProject === project.id}
+                                        isAdmin={isAdmin}
+                                        onToggle={() => setExpandedProject(expandedProject === project.id ? null : project.id)}
+                                        onEdit={() => handleEditProject(project)}
+                                        onDelete={() => handleDeleteProject(project)}
+                                        onUploadPhoto={(type) => openFileUpload(project.id, type)}
+                                        onDeletePhoto={(photo) => handleDeletePhoto(project.id, photo)}
+                                        onReorderPhoto={(index, dir) => handleReorderPhoto(project.id, index, dir)}
+                                    />
                                 ))}
                             </div>
                         )}
-                    </>
+                    </div>
                 )}
             </main>
+        </div>
+    );
+}
+
+// ==========================================================================
+// Helper Components
+// ==========================================================================
+
+function TabButton({ active, onClick, icon, label }) {
+    return (
+        <button
+            onClick={onClick}
+            className={`pb-3 px-2 font-medium transition-colors ${
+                active
+                    ? 'text-red-500 border-b-2 border-red-500'
+                    : 'text-gray-400 hover:text-white'
+            }`}
+        >
+            {icon}
+            {label}
+        </button>
+    );
+}
+
+function SectionHeader({ title, onAdd, addLabel }) {
+    return (
+        <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-bold text-white">{title}</h2>
+            {onAdd && (
+                <button
+                    onClick={onAdd}
+                    className="flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                >
+                    <Plus className="w-5 h-5 mr-2" />
+                    {addLabel}
+                </button>
+            )}
+        </div>
+    );
+}
+
+function EmptyState({ icon, title, subtitle }) {
+    return (
+        <div className="text-center py-16">
+            <div className="mx-auto mb-4">{icon}</div>
+            <p className="text-gray-400 text-lg">{title}</p>
+            {subtitle && <p className="text-gray-500 mt-2">{subtitle}</p>}
         </div>
     );
 }

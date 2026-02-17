@@ -1,112 +1,120 @@
 /**
- * SweetAlert2 utility wrapper
- * Provides reusable alert functions with dark theme
+ * SweetAlert2 utility wrapper with dark theme
  */
 import Swal from 'sweetalert2';
+import { swalDarkTheme, colors } from './theme';
 
-// Dark theme configuration
-const darkThemeConfig = {
-  background: '#1a1a1a',
-  color: '#fff',
-  confirmButtonColor: '#dc2626',
-  cancelButtonColor: '#6b7280',
-  customClass: {
-    popup: 'border border-white/30 backdrop-blur-md',
-    title: 'text-white',
-    htmlContainer: 'text-gray-300',
-    confirmButton: 'bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-semibold',
-    cancelButton: 'bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg font-semibold'
-  }
-};
-
-/**
- * Show success alert
- * @param {string} title - Alert title
- * @param {string} text - Alert text
- */
-export const showSuccess = (title, text) => {
+/** Show success alert with auto-close */
+export const showSuccess = (title, text, timer = 2000) => {
   return Swal.fire({
     icon: 'success',
     title,
     text,
-    ...darkThemeConfig,
-    timer: 5000,
-    timerProgressBar: true,
-    showConfirmButton: true,
-    confirmButtonText: 'OK'
+    ...swalDarkTheme,
+    timer,
+    showConfirmButton: timer === 0,
   });
 };
 
-/**
- * Show error alert
- * @param {string} title - Alert title
- * @param {string} text - Alert text
- */
+/** Show error alert */
 export const showError = (title, text) => {
   return Swal.fire({
     icon: 'error',
     title,
     text,
-    ...darkThemeConfig,
-    confirmButtonText: 'OK'
+    ...swalDarkTheme,
   });
 };
 
-/**
- * Show validation errors
- * @param {string} title - Alert title
- * @param {Array<string>} errors - Array of error messages
- */
+/** Show warning alert */
+export const showWarning = (title, text) => {
+  return Swal.fire({
+    icon: 'warning',
+    title,
+    text,
+    ...swalDarkTheme,
+  });
+};
+
+/** Show validation errors as bullet list */
 export const showValidationErrors = (title, errors) => {
-  const errorList = errors.map(error => `• ${error}`).join('<br>');
+  const errorList = errors.map(e => `• ${e}`).join('<br>');
   return Swal.fire({
     icon: 'warning',
     title,
     html: errorList,
-    ...darkThemeConfig,
-    confirmButtonText: 'OK'
+    ...swalDarkTheme,
   });
 };
 
-/**
- * Show confirmation dialog
- * @param {string} title - Confirmation title
- * @param {string} text - Confirmation text
- * @returns {Promise<boolean>} True if confirmed
- */
-export const showConfirmation = async (title, text) => {
+/** Show confirmation dialog - returns true if confirmed */
+export const showConfirm = async (title, text, confirmText = 'Yes') => {
   const result = await Swal.fire({
     icon: 'question',
     title,
     text,
-    ...darkThemeConfig,
+    ...swalDarkTheme,
     showCancelButton: true,
-    confirmButtonText: 'Yes',
-    cancelButtonText: 'Cancel'
+    confirmButtonText: confirmText,
+    cancelButtonText: 'Cancel',
   });
   return result.isConfirmed;
 };
 
-/**
- * Show loading indicator
- * @param {string} title - Loading message
- */
-export const showLoading = (title) => {
+/** Show delete confirmation with image preview */
+export const showDeleteConfirm = async (title, imageUrl = null) => {
+  const result = await Swal.fire({
+    title,
+    ...(imageUrl && { imageUrl, imageWidth: 200 }),
+    ...swalDarkTheme,
+    showCancelButton: true,
+    confirmButtonText: 'Delete',
+  });
+  return result.isConfirmed;
+};
+
+/** Show loading indicator */
+export const showLoading = (title = 'Loading...') => {
   Swal.fire({
     title,
-    ...darkThemeConfig,
+    ...swalDarkTheme,
     allowOutsideClick: false,
     allowEscapeKey: false,
     showConfirmButton: false,
-    didOpen: () => {
-      Swal.showLoading();
-    }
+    didOpen: () => Swal.showLoading(),
   });
 };
 
-/**
- * Close any open alert
+/** Close any open alert */
+export const closeAlert = () => Swal.close();
+
+/** 
+ * Show form dialog with custom HTML
+ * @returns {Promise<object|null>} Form values or null if cancelled
  */
-export const closeAlert = () => {
-  Swal.close();
+export const showFormDialog = async ({ title, html, preConfirm, confirmText = 'Save', allowClose = true }) => {
+  const { value } = await Swal.fire({
+    title,
+    html,
+    ...swalDarkTheme,
+    focusConfirm: false,
+    showCancelButton: allowClose,
+    allowOutsideClick: allowClose,
+    allowEscapeKey: allowClose,
+    confirmButtonText: confirmText,
+    preConfirm,
+  });
+  return value || null;
+};
+
+/** Show session expired alert and redirect */
+export const showSessionExpired = async (onLogout) => {
+  await Swal.fire({
+    icon: 'warning',
+    title: 'Session Expired',
+    text: 'Your session has expired. Please login again.',
+    ...swalDarkTheme,
+    allowOutsideClick: false,
+  });
+  onLogout?.();
 };

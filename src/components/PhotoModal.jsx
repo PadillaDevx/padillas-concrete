@@ -41,7 +41,7 @@ export default function PhotoModal({ project, currentIndex, onClose, onPrev, onN
             aria-label={`${t('a11y.photoViewer')} - ${title}`}
         >
             {/* Backdrop */}
-            <div 
+            <div
                 className="absolute inset-0 bg-black/95 backdrop-blur-sm"
                 onClick={onClose}
             />
@@ -59,8 +59,8 @@ export default function PhotoModal({ project, currentIndex, onClose, onPrev, onN
                             </p>
                         )}
                     </div>
-                    <button 
-                        onClick={onClose} 
+                    <button
+                        onClick={onClose}
                         className="glass-card p-3 rounded-full hover:bg-red-600/50 transition-all duration-300 group"
                         aria-label={t('a11y.closeModal')}
                     >
@@ -88,11 +88,10 @@ export default function PhotoModal({ project, currentIndex, onClose, onPrev, onN
                                 <img
                                     src={allPhotos[currentIndex]}
                                     alt={`${title} - ${t('a11y.photoCounter', { current: currentIndex + 1, total: allPhotos.length })}`}
-                                    className={`w-full transition-all duration-500 ${
-                                        isZoomed 
-                                            ? 'max-h-[85vh] object-contain scale-110' 
+                                    className={`w-full transition-all duration-500 ${isZoomed
+                                            ? 'max-h-[85vh] object-contain scale-110'
                                             : 'max-h-[60vh] md:max-h-[70vh] object-contain'
-                                    }`}
+                                        }`}
                                     onClick={() => setIsZoomed(!isZoomed)}
                                     onLoad={() => setIsLoading(false)}
                                 />
@@ -106,7 +105,7 @@ export default function PhotoModal({ project, currentIndex, onClose, onPrev, onN
                             </div>
 
                             {/* Zoom button */}
-                            <button 
+                            <button
                                 onClick={() => setIsZoomed(!isZoomed)}
                                 className="absolute top-4 right-4 glass-card p-2 rounded-full hover:bg-white/20 transition"
                                 aria-label={isZoomed ? 'Zoom out' : 'Zoom in'}
@@ -120,8 +119,8 @@ export default function PhotoModal({ project, currentIndex, onClose, onPrev, onN
 
                             {/* Navigation arrows */}
                             {currentIndex > 0 && (
-                                <button 
-                                    onClick={onPrev} 
+                                <button
+                                    onClick={onPrev}
                                     className="absolute left-4 top-1/2 -translate-y-1/2 glass-card p-3 md:p-4 rounded-full hover:bg-red-600/50 transition-all duration-300 group"
                                     aria-label={t('a11y.previousPhoto')}
                                 >
@@ -129,8 +128,8 @@ export default function PhotoModal({ project, currentIndex, onClose, onPrev, onN
                                 </button>
                             )}
                             {currentIndex < allPhotos.length - 1 && (
-                                <button 
-                                    onClick={onNext} 
+                                <button
+                                    onClick={onNext}
                                     className="absolute right-4 top-1/2 -translate-y-1/2 glass-card p-3 md:p-4 rounded-full hover:bg-red-600/50 transition-all duration-300 group"
                                     aria-label={t('a11y.nextPhoto')}
                                 >
@@ -156,11 +155,10 @@ export default function PhotoModal({ project, currentIndex, onClose, onPrev, onN
                                 <button
                                     key={idx}
                                     onClick={() => goToIndex(idx)}
-                                    className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden transition-all duration-300 ${
-                                        idx === currentIndex 
-                                            ? 'ring-2 ring-red-500 ring-offset-2 ring-offset-black/50 scale-105' 
+                                    className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden transition-all duration-300 ${idx === currentIndex
+                                            ? 'ring-2 ring-red-500 ring-offset-2 ring-offset-black/50 scale-105'
                                             : 'opacity-60 hover:opacity-100'
-                                    }`}
+                                        }`}
                                     aria-label={`View photo ${idx + 1}`}
                                 >
                                     <img
