@@ -16,16 +16,16 @@ createRoot(document.getElementById('root')).render(
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<App />} />
-          
+
           {/* Admin routes */}
           <Route path="/admin" element={<AdminLogin />} />
-          <Route 
-            path="/admin/dashboard" 
+          <Route
+            path="/admin/dashboard"
             element={
               <ProtectedRoute>
                 <AdminDashboard />
               </ProtectedRoute>
-            } 
+            }
           />
         </Routes>
       </AuthProvider>

@@ -20,11 +20,11 @@ const STATIC_PROJECTS = [
 // Transform API project to display format
 function transformApiProject(project) {
   const allPhotos = [];
-  
+
   if (project.beforePhoto) allPhotos.push(project.beforePhoto.url);
   if (project.photos?.length) allPhotos.push(...project.photos.map(p => p.url));
   if (project.afterPhoto) allPhotos.push(project.afterPhoto.url);
-  
+
   return {
     id: project.id,
     title: project.title,
@@ -50,7 +50,7 @@ export default function Gallery() {
         const transformed = apiProjects
           .filter(p => p.photos?.length > 0 || p.beforePhoto || p.afterPhoto)
           .map(transformApiProject);
-        
+
         // Combine static and API projects
         setProjects([...STATIC_PROJECTS, ...transformed]);
       } catch (error) {
@@ -58,7 +58,7 @@ export default function Gallery() {
         // Keep showing static projects on error
       }
     }
-    
+
     fetchProjects();
   }, []);
 
