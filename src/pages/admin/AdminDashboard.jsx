@@ -29,12 +29,15 @@ import {
     X,
     ChevronDown,
     ChevronUp,
+    ChevronLeft,
+    ChevronRight,
     Home,
     Loader2,
     Users,
     Key,
     UserPlus,
     Settings,
+    GripVertical,
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -561,6 +564,47 @@ export default function AdminDashboard() {
                     confirmButtonColor: '#dc2626',
                 });
             }
+        }
+    }
+
+    // ==========================================================================
+    // Photo Reorder Functions
+    // ==========================================================================
+
+    async function handleReorderPhoto(projectId, photoIndex, direction) {
+        const project = projects.find(p => p.id === projectId);
+        if (!project || !project.photos || project.photos.length < 2) return;
+
+        const newIndex = direction === 'left' ? photoIndex - 1 : photoIndex + 1;
+        if (newIndex < 0 || newIndex >= project.photos.length) return;
+
+        // Create new photos array with swapped positions
+        const newPhotos = [...project.photos];
+        [newPhotos[photoIndex], newPhotos[newIndex]] = [newPhotos[newIndex], newPhotos[photoIndex]];
+
+        // Update state immediately for responsiveness
+        setProjects(projects.map(p => 
+            p.id === projectId ? { ...p, photos: newPhotos } : p
+        ));
+
+        // Save to backend
+        try {
+            await updateProject(projectId, { photos: newPhotos });
+        } catch (error) {
+            // Revert on error
+            setProjects(projects.map(p => 
+                p.id === projectId ? { ...p, photos: project.photos } : p
+            ));
+            if (error.isAuthError) {
+                handleAuthError();
+                return;
+            }
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to save photo order',
+                confirmButtonColor: '#dc2626',
+            });
         }
     }
 
@@ -1178,20 +1222,59 @@ export default function AdminDashboard() {
                                                     </div>
 
                                                     {project.photos?.length > 0 ? (
-                                                        <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
-                                                            {project.photos.map(photo => (
+                                                        <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+                                                            {project.photos.map((photo, index) => (
                                                                 <div key={photo.id} className="relative group">
+                                                                    {/* Order badge */}
+                                                                    <div className="absolute top-1 left-1 z-10 bg-black/70 text-white text-xs px-2 py-0.5 rounded-full font-medium">
+                                                                        {index + 1}
+                                                                    </div>
+                                                                    
                                                                     <img
                                                                         src={photo.url}
-                                                                        alt="Gallery"
-                                                                        className="w-full h-20 object-cover rounded-lg"
+                                                                        alt={`Gallery ${index + 1}`}
+                                                                        className="w-full h-24 object-cover rounded-lg border-2 border-transparent group-hover:border-red-500 transition-all"
                                                                     />
-                                                                    <button
-                                                                        onClick={() => handleDeletePhoto(project.id, photo)}
-                                                                        className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                    >
-                                                                        <X className="w-3 h-3" />
-                                                                    </button>
+                                                                    
+                                                                    {/* Reorder & Delete buttons */}
+                                                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-1">
+                                                                        {/* Move Left */}
+                                                                        <button
+                                                                            onClick={() => handleReorderPhoto(project.id, index, 'left')}
+                                                                            disabled={index === 0}
+                                                                            className={`p-1.5 rounded-full transition-colors ${
+                                                                                index === 0 
+                                                                                    ? 'bg-gray-600/50 text-gray-400 cursor-not-allowed' 
+                                                                                    : 'bg-blue-600 text-white hover:bg-blue-500'
+                                                                            }`}
+                                                                            title="Move left"
+                                                                        >
+                                                                            <ChevronLeft className="w-4 h-4" />
+                                                                        </button>
+                                                                        
+                                                                        {/* Delete */}
+                                                                        <button
+                                                                            onClick={() => handleDeletePhoto(project.id, photo)}
+                                                                            className="p-1.5 bg-red-600 text-white rounded-full hover:bg-red-500 transition-colors"
+                                                                            title="Delete"
+                                                                        >
+                                                                            <X className="w-4 h-4" />
+                                                                        </button>
+                                                                        
+                                                                        {/* Move Right */}
+                                                                        <button
+                                                                            onClick={() => handleReorderPhoto(project.id, index, 'right')}
+                                                                            disabled={index === project.photos.length - 1}
+                                                                            className={`p-1.5 rounded-full transition-colors ${
+                                                                                index === project.photos.length - 1 
+                                                                                    ? 'bg-gray-600/50 text-gray-400 cursor-not-allowed' 
+                                                                                    : 'bg-blue-600 text-white hover:bg-blue-500'
+                                                                            }`}
+                                                                            title="Move right"
+                                                                        >
+                                                                            <ChevronRight className="w-4 h-4" />
+                                                                        </button>
+                                                                    </div>
                                                                 </div>
                                                             ))}
                                                         </div>
