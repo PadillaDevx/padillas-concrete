@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BASE_URL } from '../utils';
+import { getProjects } from '../services/api';
 import SectionHeader from './SectionHeader';
 import PhotoModal from './PhotoModal';
 
-const PROJECTS = [
+// Static projects (existing photos in public folder)
+const STATIC_PROJECTS = [
   {
-    id: 1,
+    id: 'static-1',
     title: 'Residential Driveway',
     location: 'Luverne, MN',
     before: `${BASE_URL}gallery/P1.jpg`,
@@ -15,11 +17,50 @@ const PROJECTS = [
   },
 ];
 
+// Transform API project to display format
+function transformApiProject(project) {
+  const allPhotos = [];
+  
+  if (project.beforePhoto) allPhotos.push(project.beforePhoto.url);
+  if (project.photos?.length) allPhotos.push(...project.photos.map(p => p.url));
+  if (project.afterPhoto) allPhotos.push(project.afterPhoto.url);
+  
+  return {
+    id: project.id,
+    title: project.title,
+    location: project.location || '',
+    before: project.beforePhoto?.url || allPhotos[0] || null,
+    after: project.afterPhoto?.url || allPhotos[allPhotos.length - 1] || null,
+    allPhotos,
+  };
+}
+
 export default function Gallery() {
   const { t } = useTranslation();
+  const [projects, setProjects] = useState(STATIC_PROJECTS);
   const [selectedProject, setSelectedProject] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [touchStartX, setTouchStartX] = useState(null);
+
+  // Fetch dynamic projects from API
+  useEffect(() => {
+    async function fetchProjects() {
+      try {
+        const apiProjects = await getProjects();
+        const transformed = apiProjects
+          .filter(p => p.photos?.length > 0 || p.beforePhoto || p.afterPhoto)
+          .map(transformApiProject);
+        
+        // Combine static and API projects
+        setProjects([...STATIC_PROJECTS, ...transformed]);
+      } catch (error) {
+        console.error('Failed to fetch gallery projects:', error);
+        // Keep showing static projects on error
+      }
+    }
+    
+    fetchProjects();
+  }, []);
 
   const close = () => { setSelectedProject(null); setCurrentIndex(0); };
   const prev = () => setCurrentIndex((i) => Math.max(0, i - 1));
@@ -52,7 +93,7 @@ export default function Gallery() {
         <SectionHeader titleKey="gallery.title" subtitleKey="gallery.subtitle" />
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {PROJECTS.map((project) => (
+          {projects.map((project) => (
             <div
               key={project.id}
               className="glass-card rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300"

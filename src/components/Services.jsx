@@ -20,7 +20,7 @@ const Icons = {
       <rect x="48" y="42" width="6" height="8" rx="1" fill="currentColor" fillOpacity="0.15" />
     </svg>
   ),
-  
+
   // Driveway: Car on concrete driveway leading to garage
   driveway: (
     <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
@@ -39,7 +39,7 @@ const Icons = {
       <circle cx="38" cy="52" r="2" fill="currentColor" />
     </svg>
   ),
-  
+
   // Walkway: Concrete path in perspective with landscaping
   walkway: (
     <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
@@ -70,7 +70,7 @@ const Icons = {
       <circle cx="48" cy="46" r="1.5" fill="currentColor" fillOpacity="0.2" />
     </svg>
   ),
-  
+
   // Sidewalk: Urban sidewalk with curb
   sidewalk: (
     <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
@@ -90,7 +90,7 @@ const Icons = {
       <path d="M44 28v6M42 34l2 6M46 34l-2 6M42 32l-2 4M46 32l2 4" strokeWidth="1.5" />
     </svg>
   ),
-  
+
   // Reinforced Concrete: Concrete block with rebar grid
   reinforced: (
     <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
@@ -112,7 +112,7 @@ const Icons = {
       <circle cx="44" cy="50" r="1.5" fill="currentColor" />
     </svg>
   ),
-  
+
   // Stamped Concrete: Decorative stone pattern
   stamped: (
     <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
@@ -141,7 +141,7 @@ const Icons = {
       <circle cx="50" cy="48" r="1" fill="currentColor" fillOpacity="0.3" />
     </svg>
   ),
-  
+
   // Other: Construction tools (trowel and level)
   other: (
     <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
