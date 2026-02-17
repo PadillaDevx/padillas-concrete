@@ -410,9 +410,9 @@ export default function AdminDashboard() {
         const projectId = uploadingTo;
         const type = uploadType;
 
-        console.log('handleFileUpload: Starting upload', { 
-            projectId, 
-            type, 
+        console.log('handleFileUpload: Starting upload', {
+            projectId,
+            type,
             filesCount: filesArray.length,
             fileNames: filesArray.map(f => f.name)
         });
@@ -446,9 +446,9 @@ export default function AdminDashboard() {
                 }
             }
 
-            console.log('Upload summary:', { 
-                successful: successfulUploads.length, 
-                failed: failedUploads.length 
+            console.log('Upload summary:', {
+                successful: successfulUploads.length,
+                failed: failedUploads.length
             });
 
             // Update project with successful uploads

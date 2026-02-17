@@ -108,13 +108,13 @@ export async function deleteProject(projectId) {
 
 export async function uploadPhoto(projectId, file, type = 'gallery') {
     console.log('uploadPhoto called:', { projectId, fileName: file.name, fileSize: file.size, fileType: file.type, type });
-    
+
     const formData = new FormData();
     formData.append('photo', file);
     formData.append('type', type);
 
     console.log('FormData created, sending request...');
-    
+
     try {
         const result = await apiRequest(`/projects/${projectId}/photos`, {
             method: 'POST',
