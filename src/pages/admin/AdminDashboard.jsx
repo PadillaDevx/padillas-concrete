@@ -399,10 +399,20 @@ export default function AdminDashboard() {
 
     async function handleFileUpload(e) {
         const files = e.target.files;
-        if (!files?.length || !uploadingTo) return;
+        if (!files?.length || !uploadingTo) {
+            console.log('handleFileUpload: No files or no uploadingTo', { files: files?.length, uploadingTo });
+            return;
+        }
 
         const projectId = uploadingTo;
         const type = uploadType;
+
+        console.log('handleFileUpload: Starting upload', { 
+            projectId, 
+            type, 
+            filesCount: files.length,
+            fileNames: Array.from(files).map(f => f.name)
+        });
 
         // Reset input
         e.target.value = '';
@@ -411,43 +421,76 @@ export default function AdminDashboard() {
         // Show upload progress
         Swal.fire({
             title: 'Uploading...',
-            html: `<p>Uploading ${files.length} photo(s)</p>`,
+            html: `<p>Uploading ${files.length} photo(s) to Cloudinary...</p>`,
             allowOutsideClick: false,
             didOpen: () => Swal.showLoading(),
         });
 
+        const successfulUploads = [];
+        const failedUploads = [];
+
         try {
-            const uploadPromises = Array.from(files).map(file =>
-                uploadPhoto(projectId, file, type)
-            );
+            // Upload files one by one to better track errors
+            for (const file of Array.from(files)) {
+                try {
+                    console.log('Uploading file:', file.name, 'size:', file.size, 'type:', file.type);
+                    const result = await uploadPhoto(projectId, file, type);
+                    console.log('Upload success:', result);
+                    successfulUploads.push(result);
+                } catch (fileError) {
+                    console.error('Upload failed for file:', file.name, fileError);
+                    failedUploads.push({ file: file.name, error: fileError.message });
+                }
+            }
 
-            const results = await Promise.all(uploadPromises);
-
-            // Update project with new photos
-            setProjects(projects.map(p => {
-                if (p.id !== projectId) return p;
-
-                const updatedProject = { ...p };
-                results.forEach(result => {
-                    if (result.photo.type === 'before') {
-                        updatedProject.beforePhoto = result.photo;
-                    } else if (result.photo.type === 'after') {
-                        updatedProject.afterPhoto = result.photo;
-                    } else {
-                        updatedProject.photos = [...(updatedProject.photos || []), result.photo];
-                    }
-                });
-                return updatedProject;
-            }));
-
-            Swal.fire({
-                icon: 'success',
-                title: 'Uploaded!',
-                text: `${files.length} photo(s) uploaded successfully`,
-                timer: 1500,
-                showConfirmButton: false,
+            console.log('Upload summary:', { 
+                successful: successfulUploads.length, 
+                failed: failedUploads.length 
             });
+
+            // Update project with successful uploads
+            if (successfulUploads.length > 0) {
+                setProjects(projects.map(p => {
+                    if (p.id !== projectId) return p;
+
+                    const updatedProject = { ...p };
+                    successfulUploads.forEach(result => {
+                        if (result.photo.type === 'before') {
+                            updatedProject.beforePhoto = result.photo;
+                        } else if (result.photo.type === 'after') {
+                            updatedProject.afterPhoto = result.photo;
+                        } else {
+                            updatedProject.photos = [...(updatedProject.photos || []), result.photo];
+                        }
+                    });
+                    return updatedProject;
+                }));
+            }
+
+            // Show result
+            if (failedUploads.length > 0) {
+                const errorDetails = failedUploads.map(f => `${f.file}: ${f.error}`).join('\n');
+                Swal.fire({
+                    icon: failedUploads.length === files.length ? 'error' : 'warning',
+                    title: failedUploads.length === files.length ? 'Upload Failed' : 'Partial Upload',
+                    html: `
+                        <p>${successfulUploads.length} photo(s) uploaded successfully</p>
+                        <p style="color: red;">${failedUploads.length} photo(s) failed:</p>
+                        <pre style="text-align: left; font-size: 12px; max-height: 200px; overflow: auto;">${errorDetails}</pre>
+                    `,
+                    confirmButtonColor: '#dc2626',
+                });
+            } else {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Uploaded!',
+                    text: `${successfulUploads.length} photo(s) uploaded successfully`,
+                    timer: 2000,
+                    showConfirmButton: false,
+                });
+            }
         } catch (error) {
+            console.error('handleFileUpload error:', error);
             if (error.isAuthError) {
                 handleAuthError();
                 return;
@@ -455,7 +498,7 @@ export default function AdminDashboard() {
             Swal.fire({
                 icon: 'error',
                 title: 'Upload Failed',
-                text: error.message,
+                html: `<p>${error.message}</p><pre style="font-size: 10px;">${error.stack || ''}</pre>`,
                 confirmButtonColor: '#dc2626',
             });
         }
