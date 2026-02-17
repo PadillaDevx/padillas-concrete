@@ -242,13 +242,16 @@ export default function AdminDashboard() {
 
                 const data = await createProject(formValues);
                 setProjects([...projects, data.project]);
+                
+                // Auto-expand the new project so user can add photos
+                setExpandedProject(data.project.id);
 
                 Swal.fire({
                     icon: 'success',
-                    title: 'Created!',
-                    text: 'Project created successfully',
-                    timer: 1500,
-                    showConfirmButton: false,
+                    title: 'Project Created!',
+                    html: '<p>Now add photos to your project below.</p><p class="text-sm text-gray-500 mt-2">Upload Before, After, and Gallery photos.</p>',
+                    confirmButtonColor: '#dc2626',
+                    confirmButtonText: 'Got it!',
                 });
             } catch (error) {
                 Swal.fire({
@@ -982,6 +985,12 @@ export default function AdminDashboard() {
                                             </div>
 
                                             <div className="flex items-center space-x-2">
+                                                {/* Add Photos hint when no photos */}
+                                                {!project.beforePhoto && !project.afterPhoto && (!project.photos || project.photos.length === 0) && (
+                                                    <span className="text-amber-500 text-sm mr-2 animate-pulse">
+                                                        Click to add photos →
+                                                    </span>
+                                                )}
                                                 {isAdmin && (
                                                     <>
                                                         <button
