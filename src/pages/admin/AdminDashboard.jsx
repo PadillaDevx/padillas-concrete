@@ -404,24 +404,27 @@ export default function AdminDashboard() {
             return;
         }
 
+        // IMPORTANT: Copy files array BEFORE resetting input (resetting clears FileList)
+        const filesArray = Array.from(files);
+
         const projectId = uploadingTo;
         const type = uploadType;
 
         console.log('handleFileUpload: Starting upload', { 
             projectId, 
             type, 
-            filesCount: files.length,
-            fileNames: Array.from(files).map(f => f.name)
+            filesCount: filesArray.length,
+            fileNames: filesArray.map(f => f.name)
         });
 
-        // Reset input
+        // Reset input (this clears the FileList, but we already copied it)
         e.target.value = '';
         setUploadingTo(null);
 
         // Show upload progress
         Swal.fire({
             title: 'Uploading...',
-            html: `<p>Uploading ${files.length} photo(s) to Cloudinary...</p>`,
+            html: `<p>Uploading ${filesArray.length} photo(s) to Cloudinary...</p>`,
             allowOutsideClick: false,
             didOpen: () => Swal.showLoading(),
         });
@@ -431,7 +434,7 @@ export default function AdminDashboard() {
 
         try {
             // Upload files one by one to better track errors
-            for (const file of Array.from(files)) {
+            for (const file of filesArray) {
                 try {
                     console.log('Uploading file:', file.name, 'size:', file.size, 'type:', file.type);
                     const result = await uploadPhoto(projectId, file, type);
@@ -471,8 +474,8 @@ export default function AdminDashboard() {
             if (failedUploads.length > 0) {
                 const errorDetails = failedUploads.map(f => `${f.file}: ${f.error}`).join('\n');
                 Swal.fire({
-                    icon: failedUploads.length === files.length ? 'error' : 'warning',
-                    title: failedUploads.length === files.length ? 'Upload Failed' : 'Partial Upload',
+                    icon: failedUploads.length === filesArray.length ? 'error' : 'warning',
+                    title: failedUploads.length === filesArray.length ? 'Upload Failed' : 'Partial Upload',
                     html: `
                         <p>${successfulUploads.length} photo(s) uploaded successfully</p>
                         <p style="color: red;">${failedUploads.length} photo(s) failed:</p>
