@@ -115,3 +115,55 @@ export async function deletePhoto(projectId, photoId) {
         method: 'DELETE',
     });
 }
+
+// =============================================================================
+// Password Management
+// =============================================================================
+
+export async function changePassword(currentPassword, newPassword, newUsername = null) {
+    const payload = { currentPassword, newPassword };
+    if (newUsername) {
+        payload.newUsername = newUsername;
+    }
+
+    const data = await apiRequest('/auth/change-password', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+
+    // Update token if new one is provided
+    if (data.token) {
+        localStorage.setItem('adminToken', data.token);
+    }
+
+    return data;
+}
+
+// =============================================================================
+// User Management API (Admin only)
+// =============================================================================
+
+export async function getUsers() {
+    const data = await apiRequest('/users');
+    return data.users || [];
+}
+
+export async function createUser(userData) {
+    return apiRequest('/users', {
+        method: 'POST',
+        body: JSON.stringify(userData),
+    });
+}
+
+export async function updateUser(userId, updates) {
+    return apiRequest(`/users/${userId}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates),
+    });
+}
+
+export async function deleteUser(userId) {
+    return apiRequest(`/users/${userId}`, {
+        method: 'DELETE',
+    });
+}

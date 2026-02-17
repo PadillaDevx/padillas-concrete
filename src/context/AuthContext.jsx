@@ -47,8 +47,13 @@ export function AuthProvider({ children }) {
         setUser(null);
     }
 
+    // Update user after password change
+    function updateUser(userData) {
+        setUser(userData);
+    }
+
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout, checkAuth }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, checkAuth, updateUser }}>
             {children}
         </AuthContext.Provider>
     );
